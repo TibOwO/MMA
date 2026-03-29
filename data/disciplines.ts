@@ -147,7 +147,7 @@ export const disciplines = {
     contact: ["06 14 95 88 49"],
   },
 
-  lutaLivre: {
+  lutalivre: {
     name: "Luta Livre",
     presentation:
       "La Luta Livre est un art martial brésilien basé sur la lutte et le grappling. Accessible à tous les niveaux pour adolescents et adultes.",
