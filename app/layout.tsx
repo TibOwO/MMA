@@ -22,16 +22,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        <header className="fixed top-0 left-0 w-full bg-gray-900 text-white shadow-md z-50">
-          <div className="container mx-auto flex justify-between items-center p-4">
-            <h1 className="text-xl font-bold">MMA Club</h1>
-            <nav>
-              <Link href="/" className="hover:text-blue-400 transition-colors">Accueil</Link>
-            </nav>
+        <header className="fixed top-0 left-0 w-full  text-white shadow-md z-50 rounded-b-xl">
+          <div className="container mx-auto flex justify-center items-center p-2 relative">
+            {/* Logo centré */}
+            <Link href="/" className="flex items-center">
+              <img src="images/logo.jpg" alt="Logo Club MMA" className="h-15 w-auto cursor-pointer rounded-full" />
+            </Link>
           </div>
         </header>
 
-        <div className="h-20"></div> {/* pour compenser la barre */}
+        <div className="h-20"></div> {/* espace pour la barre fixe */}
 
         {children}
       </body>
