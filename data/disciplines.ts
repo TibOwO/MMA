@@ -5,10 +5,6 @@ export const disciplines = {
     name: "Judo",
     presentation:
       "Le Judo est un art martial japonais axé sur la maîtrise de l'équilibre, les projections et le respect de l'adversaire. Accessible dès 3 ans, le Judo développe coordination, concentration et esprit sportif.",
-    coaches: [
-      { nom: "Luc Martin", photoUrl: "/images/coaches/luc.jpg" },
-      { nom: "Sophie Bernard", photoUrl: "/images/coaches/sophie.jpg" },
-    ],
     tarifs: [
       {
         nom: "3 - 5 ans",
@@ -30,10 +26,6 @@ export const disciplines = {
     name: "Boxe",
     presentation:
       "La Boxe permet de développer endurance, puissance et technique. Des cours pour enfants et adultes sont proposés, avec un accent sur le plaisir, la discipline et la sécurité.",
-    coaches: [
-      { nom: "Alice Dupont", photoUrl: "/images/coaches/alice.jpg" },
-      { nom: "Bob Martin", photoUrl: "/images/coaches/bob.jpg" },
-    ],
     tarifs: [
       {
         nom: "Boxe Kids 6-9 ans",
@@ -61,10 +53,6 @@ export const disciplines = {
     name: "MMA",
     presentation:
       "Le MMA (Mixed Martial Arts) combine plusieurs arts martiaux pour développer technique, endurance et stratégie. Des cours sont proposés pour enfants, adolescents et adultes, loisir ou compétition.",
-    coaches: [
-      { nom: "John Doe", photoUrl: "/images/coaches/john.jpg" },
-      { nom: "Jane Smith", photoUrl: "/images/coaches/jane.jpg" },
-    ],
     tarifs: [
       // MMA enfants
       {
@@ -133,9 +121,6 @@ export const disciplines = {
     name: "Striking",
     presentation:
       "Le Striking se concentre sur les techniques de pieds-poings issues du MMA et de la boxe thaï. Cours adaptés pour enfants, adolescents et adultes.",
-    coaches: [
-      { nom: "Marc Leroy", photoUrl: "/images/coaches/marc.jpg" },
-    ],
     tarifs: [
       { nom: "Striking MMA 2J/S", prix: "390€/an", horaires: [], description: "" },
       { nom: "Striking MMA 4J/S", prix: "490€/an", horaires: [], description: "" },
@@ -151,9 +136,6 @@ export const disciplines = {
     name: "Luta Livre",
     presentation:
       "La Luta Livre est un art martial brésilien basé sur la lutte et le grappling. Accessible à tous les niveaux pour adolescents et adultes.",
-    coaches: [
-      { nom: "Emma Lemoine", photoUrl: "/images/coaches/emma.jpg" },
-    ],
     tarifs: [
       {
         nom: "Cours Adultes",
