@@ -9,18 +9,20 @@ interface Tarif {
 }
 
 interface Coach {
+  id: number;
+  prenom: string;
   nom: string;
-  photoUrl?: string;
 }
 
 interface DisciplineProps {
   name: string;
   presentation: string;
   tarifs: Tarif[];
+  contact: string[];
   coaches: Coach[];
 }
 
-const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs, coaches }) => {
+const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs, contact, coaches }) => {
   return (
     <div className="container mx-auto p-6 space-y-12 bg-gray-900 min-h-screen text-gray-100">
       {/* Header du sport */}
@@ -30,32 +32,28 @@ const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs,
       </div>
 
       {/* Coaches */}
-      <div>
-        <h2 className="text-3xl font-semibold mb-6 text-center text-indigo-300">Coach(s)</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {coaches.map((coach) => (
-            <div
-              key={coach.nom}
-              className="flex flex-col items-center w-36 p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 bg-gray-800"
-            >
-              {coach.photoUrl ? (
-                <img
-                  src={coach.photoUrl}
-                  alt={coach.nom}
-                  className="w-28 h-28 rounded-full object-cover border-2 border-gray-700"
-                />
-              ) : (
-                <div className="w-28 h-28 rounded-full bg-gray-700 flex items-center justify-center text-gray-400">
-                  ?
+      {coaches.length > 0 && (
+        <div>
+          <h2 className="text-3xl font-semibold mb-6 text-center text-indigo-300">Coach(s)</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            {coaches.map((coach) => (
+              <div
+                key={coach.id}
+                className="flex flex-col items-center w-32 p-4 rounded-xl bg-gray-800 shadow-md"
+              >
+                <div className="w-16 h-16 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-200 text-xl font-bold">
+                  {coach.prenom[0]}{coach.nom.split(' ').pop()?.[0]}
                 </div>
-              )}
-              <span className="mt-3 text-center font-medium text-gray-100">{coach.nom}</span>
-            </div>
-          ))}
+                <span className="mt-3 text-center text-sm font-medium text-gray-100">
+                  {coach.prenom} {coach.nom}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Tarifs */}
+      {/* Tarifs & Horaires */}
       <div>
         <h2 className="text-3xl font-semibold mb-6 text-center text-indigo-300">Tarifs & Horaires</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -66,16 +64,34 @@ const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs,
             >
               <h3 className="text-2xl font-bold text-indigo-200 mb-2">{tarif.nom}</h3>
               <p className="text-lg font-semibold text-gray-100">{tarif.prix}</p>
-              <p className="mt-2 text-gray-300">{tarif.description}</p>
-              <ul className="mt-3 list-disc list-inside text-gray-400">
-                {tarif.horaires.map((h, idx) => (
-                  <li key={idx}>{h}</li>
-                ))}
-              </ul>
+              {tarif.description && <p className="mt-2 text-gray-300">{tarif.description}</p>}
+              {tarif.horaires.length > 0 && (
+                <ul className="mt-3 list-disc list-inside text-gray-400">
+                  {tarif.horaires.map((h, idx) => (
+                    <li key={idx}>{h}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           ))}
         </div>
       </div>
+
+      {/* Contact */}
+      {contact.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-6 shadow-md">
+          <h2 className="text-2xl font-semibold mb-4 text-indigo-300">Contact</h2>
+          <ul className="space-y-1">
+            {contact.map((tel) => (
+              <li key={tel}>
+                <a href={`tel:${tel.replace(/\s/g, '')}`} className="text-gray-300 hover:text-white transition">
+                  📞 {tel}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

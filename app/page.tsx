@@ -1,20 +1,26 @@
-"use client"; // On met en client pour utiliser éventuellement des hooks si nécessaire
+"use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SportCard from "../components/SportCard";
-import { disciplines } from "../data/disciplines";
-import Link from "next/link";
 
-const sportsArray = Object.keys(disciplines).map((key) => ({
-  name: disciplines[key as keyof typeof disciplines].name,
-  description: disciplines[key as keyof typeof disciplines].presentation,
-  imageUrl: `/images/${key}.jpg`,
-  link: `/discipline/${key}`,
-}));
+interface Discipline {
+  key: string;
+  name: string;
+  presentation: string;
+}
 
 export default function HomePage() {
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+
+  useEffect(() => {
+    fetch("/api/disciplines")
+      .then((res) => res.json())
+      .then((data) => setDisciplines(data.disciplines ?? []))
+      .catch(() => {});
+  }, []);
+
   return (
-    <div className="relative">
+    <div className="relative">  
       {/* Présentation du club */}
       <section className="container mx-auto p-6 mb-10 text-center">
         <h2 className="text-3xl font-bold mb-4">Bienvenue au MMA Club</h2>
@@ -28,8 +34,14 @@ export default function HomePage() {
       <section className="container mx-auto p-6">
         <h2 className="text-4xl font-bold mb-6 text-center">Nos Disciplines</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sportsArray.map((sport) => (
-            <SportCard key={sport.name} {...sport} />
+          {disciplines.map((sport) => (
+            <SportCard
+              key={sport.key}
+              name={sport.name}
+              description={sport.presentation}
+              imageUrl={`/images/${sport.key}.jpg`}
+              link={`/discipline/${sport.key}`}
+            />
           ))}
         </div>
       </section>

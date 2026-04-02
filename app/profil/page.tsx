@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface StoredUser {
+interface SessionUser {
   id: number;
-  login: string;
   nom: string;
   prenom: string;
+  email: string;
   role: string;
-  email?: string;
-  sport?: string | string[] | null;
+}
+
+interface Adhesion {
+  saison: string;
+  statut: string;
+  code_zk: number | null;
 }
 
 const roleLabel: Record<string, string> = {
@@ -19,41 +23,32 @@ const roleLabel: Record<string, string> = {
   membre: "Membre",
 };
 
-function SportBadge({ sport }: { sport: string | string[] | null | undefined }) {
-  if (!sport) return <span className="text-gray-400">—</span>;
-  const list = Array.isArray(sport) ? sport : [sport];
-  return (
-    <div className="flex flex-wrap gap-2">
-      {list.map((s) => (
-        <span key={s} className="bg-indigo-900 text-indigo-200 text-sm px-3 py-0.5 rounded-full capitalize">
-          {s}
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export default function ProfilPage() {
-  const [user, setUser] = useState<StoredUser | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [adhesion, setAdhesion] = useState<Adhesion | null>(null);
   const [qrError, setQrError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const raw = localStorage.getItem("user");
-    if (!raw) {
-      router.replace("/login");
-      return;
-    }
-    try {
-      setUser(JSON.parse(raw));
-    } catch {
-      router.replace("/login");
-    }
+    fetch("/api/mon-profil")
+      .then((res) => {
+        if (res.status === 401) {
+          router.replace("/login");
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        setUser(data.user);
+        setAdhesion(data.adhesion);
+      })
+      .catch(() => router.replace("/login"));
   }, [router]);
 
   if (!user) return null;
 
-  const qrUrl = `/images/qrcodes/${user.login}.png`;
+  const qrUrl = `/images/qrcodes/${user.id}.png`;
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
@@ -86,8 +81,7 @@ export default function ProfilPage() {
           <InfoRow label="Identifiant" value={`#${user.id}`} />
           <InfoRow label="Prénom" value={user.prenom} />
           <InfoRow label="Nom" value={user.nom} />
-          <InfoRow label="Login" value={user.login} />
-          <InfoRow label="Email" value={user.email || "—"} />
+          <InfoRow label="Email" value={user.email} />
           <div className="flex justify-between items-center border-b border-gray-800 pb-4">
             <span className="text-gray-400 text-sm">Rôle</span>
             <span
@@ -102,13 +96,19 @@ export default function ProfilPage() {
               {roleLabel[user.role] ?? user.role}
             </span>
           </div>
-          {user.role === "coach" && (
-            <div className="flex justify-between items-start border-b border-gray-800 pb-4">
-              <span className="text-gray-400 text-sm">Discipline(s)</span>
-              <SportBadge sport={user.sport} />
-            </div>
-          )}
         </div>
+
+        {/* Adhésion */}
+        {adhesion && (
+          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-5">
+            <h2 className="text-lg font-semibold text-indigo-200 mb-2">Adhésion</h2>
+            <InfoRow label="Saison" value={adhesion.saison} />
+            <InfoRow label="Statut" value={adhesion.statut} />
+            {adhesion.code_zk && (
+              <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
+            )}
+          </div>
+        )}
 
       </div>
     </main>

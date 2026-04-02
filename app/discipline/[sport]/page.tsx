@@ -1,18 +1,48 @@
 "use client";
 
-// src/app/discipline/[sport]/page.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import DisciplinePage from "../../../components/DisciplinePage";
-import { disciplines } from "../../../data/disciplines";
-import { users } from "../../../data/users";
+
+interface Tarif {
+  nom: string;
+  prix: string;
+  horaires: string[];
+  description: string;
+}
+
+interface Coach {
+  id: number;
+  prenom: string;
+  nom: string;
+}
+
+interface Discipline {
+  key: string;
+  name: string;
+  presentation: string;
+  tarifs: Tarif[];
+  contact: string[];
+  coaches: Coach[];
+}
 
 export default function SportDynamicPage() {
   const params = useParams();
-  const name = params.sport as string;
-  const sportData = disciplines[name as keyof typeof disciplines];
+  const key = params.sport as string;
+  const [discipline, setDiscipline] = useState<Discipline | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-  if (!sportData) {
+  useEffect(() => {
+    fetch(`/api/disciplines/${key}`)
+      .then((res) => {
+        if (res.status === 404) { setNotFound(true); return null; }
+        return res.json();
+      })
+      .then((data) => { if (data) setDiscipline(data); })
+      .catch(() => setNotFound(true));
+  }, [key]);
+
+  if (notFound) {
     return (
       <div className="text-center mt-20 text-xl">
         Sport introuvable 😕
@@ -20,17 +50,7 @@ export default function SportDynamicPage() {
     );
   }
 
-  // Filtrer les coachs utilisateurs selon le sport (champ sport dans users)
-  const coachsForSport = users.filter((u) => {
-    if (u.role !== "coach") return false;
-    if (!u.sport) return false;
-    if (typeof u.sport === "string") return u.sport === name;
-    if (Array.isArray(u.sport)) return u.sport.includes(name);
-    return false;
-  }).map((u) => ({
-    nom: `${u.prenom} ${u.nom}`,
-    photoUrl: `/images/coaches/${u.prenom.toLowerCase() + u.nom.toLowerCase()}.jpg`,
-  }));
+  if (!discipline) return null;
 
-  return <DisciplinePage {...sportData} coaches={coachsForSport} />;
+  return <DisciplinePage {...discipline} />;
 }

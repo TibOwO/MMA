@@ -6,13 +6,10 @@ import { useRouter } from "next/navigation";
 
 interface StoredUser {
   id: number;
-  login: string;
   nom: string;
   prenom: string;
   role: string;
-    email?: string;
-    sport?: string | string[] | null;
-    
+  email: string;
 }
 
 export default function HeaderNav() {
@@ -30,7 +27,8 @@ export default function HeaderNav() {
     }
   }, []);
 
-  function handleLogout() {
+  async function handleLogout() {
+    await fetch("/api/logout", { method: "POST" });
     localStorage.removeItem("user");
     setUser(null);
     router.push("/");
