@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 // Associer chaque clé de discipline à son URL widget HelloAsso
@@ -20,18 +20,17 @@ const WIDGET_URLS: Record<string, { label: string; url: string }> = {
   },
 };
 
-// URL par défaut si pas de discipline ou si la discipline n'est pas reconnue
 const DEFAULT_URL =
   'https://www.helloasso-sandbox.com/associations/marseille-fight-club/adhesions/test/widget';
 
-export default function AdhesionPage() {
+function AdhesionContent() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const searchParams = useSearchParams();
   const disciplineKey = searchParams.get('discipline') ?? '';
 
   const discipline = WIDGET_URLS[disciplineKey];
   const widgetUrl = discipline?.url ?? DEFAULT_URL;
-  const label = discipline?.label ?? 'club'; // club si pas de discipline ou si la discipline n'est pas reconnue
+  const label = discipline?.label ?? 'club';
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -61,5 +60,13 @@ export default function AdhesionPage() {
         style={{ width: '100%', height: '750px', border: 'none', display: 'block' }}
       />
     </main>
+  );
+}
+
+export default function AdhesionPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Chargement…</div>}>
+      <AdhesionContent />
+    </Suspense>
   );
 }
