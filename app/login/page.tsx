@@ -26,7 +26,7 @@ export default function LoginPage() {
 
       if (res.ok && data.success) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        router.push("/");
+        window.location.href = "/";
       } else {
         setError(data.error || "Email ou mot de passe incorrect.");
       }

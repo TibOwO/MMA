@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { QRCodeSVG } from "qrcode.react";
+
 interface SessionUser {
   id: number;
   nom: string;
@@ -14,6 +16,8 @@ interface SessionUser {
 interface Adhesion {
   saison: string;
   statut: string;
+  discipline: string | null;
+  discipline_key: string | null;
   code_zk: number | null;
 }
 
@@ -25,8 +29,7 @@ const roleLabel: Record<string, string> = {
 
 export default function ProfilPage() {
   const [user, setUser] = useState<SessionUser | null>(null);
-  const [adhesion, setAdhesion] = useState<Adhesion | null>(null);
-  const [qrError, setQrError] = useState(false);
+  const [adhesions, setAdhesions] = useState<Adhesion[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,14 +44,12 @@ export default function ProfilPage() {
       .then((data) => {
         if (!data) return;
         setUser(data.user);
-        setAdhesion(data.adhesion);
+        setAdhesions(data.adhesions ?? []);
       })
       .catch(() => router.replace("/login"));
   }, [router]);
 
   if (!user) return null;
-
-  const qrUrl = `/images/qrcodes/${user.id}.png`;
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
@@ -56,23 +57,6 @@ export default function ProfilPage() {
 
         {/* Titre */}
         <h1 className="text-3xl font-extrabold text-indigo-300 text-center">Mon espace</h1>
-
-        {/* QR Code */}
-        <div className="bg-gray-900 rounded-2xl p-8 flex flex-col items-center gap-4 shadow-lg">
-          <h2 className="text-lg font-semibold text-indigo-200">Mon QR Code</h2>
-          {!qrError ? (
-            <img
-              src={qrUrl}
-              alt={`QR code de ${user.prenom} ${user.nom}`}
-              className="w-52 h-52 object-contain rounded-xl border border-gray-700"
-              onError={() => setQrError(true)}
-            />
-          ) : (
-            <div className="w-52 h-52 flex items-center justify-center rounded-xl border border-dashed border-gray-600 text-gray-500 text-sm text-center px-4">
-              QR code non disponible
-            </div>
-          )}
-        </div>
 
         {/* Informations personnelles */}
         <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-5">
@@ -98,16 +82,33 @@ export default function ProfilPage() {
           </div>
         </div>
 
-        {/* Adhésion */}
-        {adhesion && (
-          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-5">
-            <h2 className="text-lg font-semibold text-indigo-200 mb-2">Adhésion</h2>
-            <InfoRow label="Saison" value={adhesion.saison} />
-            <InfoRow label="Statut" value={adhesion.statut} />
-            {adhesion.code_zk && (
-              <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
-            )}
+        {/* Adhésions */}
+        {adhesions.length === 0 ? (
+          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg text-center text-gray-400">
+            <p className="mb-2 font-semibold text-white">Aucune adhésion active</p>
+            <p className="text-sm">Scannez un QR code dans les locaux du club pour vous inscrire à une discipline.</p>
           </div>
+        ) : (
+          adhesions.map((a, i) => (
+            <div key={i} className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-5">
+              <h2 className="text-lg font-semibold text-indigo-200 mb-2">
+                Adhésion{a.discipline ? ` — ${a.discipline}` : ""}
+              </h2>
+              <InfoRow label="Saison" value={a.saison} />
+              <InfoRow label="Statut" value={a.statut} />
+              {a.code_zk !== null && (
+                <>
+                  <InfoRow label="Code ZK" value={String(a.code_zk)} />
+                  <div className="flex flex-col items-center gap-3 pt-2">
+                    <p className="text-sm text-gray-400">QR Code d&apos;accès</p>
+                    <div className="bg-white p-3 rounded-xl">
+                      <QRCodeSVG value={String(a.code_zk)} size={160} />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))
         )}
 
       </div>

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
+        destination: "https://mma-backend-s3gu.onrender.com/api/:path*"
       },
     ];
   },
