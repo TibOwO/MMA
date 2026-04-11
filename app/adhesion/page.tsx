@@ -1,36 +1,38 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useRef, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-
-// Associer chaque clé de discipline à son URL widget HelloAsso
-const WIDGET_URLS: Record<string, { label: string; url: string }> = {
-  judo: {
-    label: 'Judo',
-    url: 'https://www.helloasso-sandbox.com/associations/marseille-fight-club/adhesions/test/widget',
-  },
-  boxe: {
-    label: 'Boxe',
-    url: 'https://www.helloasso-sandbox.com/associations/marseille-fight-club/adhesions/test/widget',
-  },
-  mma: {
-    label: 'MMA',
-    url: 'https://www.helloasso-sandbox.com/associations/marseille-fight-club/adhesions/test/widget',
-  },
-};
-
-const DEFAULT_URL =
-  'https://www.helloasso-sandbox.com/associations/marseille-fight-club/adhesions/test/widget';
 
 function AdhesionContent() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const searchParams = useSearchParams();
   const disciplineKey = searchParams.get('discipline') ?? '';
 
-  const discipline = WIDGET_URLS[disciplineKey];
-  const widgetUrl = discipline?.url ?? DEFAULT_URL;
-  const label = discipline?.label ?? 'club';
+  const [widgetUrl, setWidgetUrl] = useState<string | null>(null);
+  const [label, setLabel] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!disciplineKey) {
+      setError('Aucune discipline spécifiée.');
+      return;
+    }
+    fetch(`/api/disciplines/${disciplineKey}`)
+      .then((r) => {
+        if (!r.ok) throw new Error('Discipline introuvable');
+        return r.json();
+      })
+      .then((data) => {
+        setLabel(data.name ?? disciplineKey);
+        if (!data.helloasso_url) {
+          setError("Le formulaire d'adhésion n'est pas encore configuré pour cette discipline.");
+        } else {
+          setWidgetUrl(data.helloasso_url);
+        }
+      })
+      .catch(() => setError('Discipline introuvable.'));
+  }, [disciplineKey]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -43,6 +45,22 @@ function AdhesionContent() {
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, []);
+
+  if (error) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-8 text-center">
+        <p className="text-red-400 text-sm">{error}</p>
+      </main>
+    );
+  }
+
+  if (!widgetUrl) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-8 text-center text-gray-500 text-sm">
+        Chargement…
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-8">

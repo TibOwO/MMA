@@ -25,6 +25,9 @@ export default function HelloAssoAdminPage() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncResult, setSyncResult] = useState<{ created: number } | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [reassignStatus, setReassignStatus] = useState<SyncStatus>("idle");
+  const [reassignResult, setReassignResult] = useState<{ assigned: number; skipped: number } | null>(null);
+  const [reassignError, setReassignError] = useState<string | null>(null);
 
   useEffect(() => {
     // Vérification synchrone via localStorage — évite le flash de redirection
@@ -75,7 +78,30 @@ export default function HelloAssoAdminPage() {
     }
   }
 
+  async function handleReassign() {
+    setReassignStatus("loading");
+    setReassignResult(null);
+    setReassignError(null);
+    try {
+      const res = await fetch("/api/adhesions/reassign-zk", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setReassignError(data.error ?? "Erreur inconnue");
+        setReassignStatus("error");
+      } else {
+        setReassignResult({ assigned: data.assigned, skipped: data.skipped });
+        setReassignStatus("success");
+        loadAdhesions();
+      }
+    } catch (e) {
+      setReassignError(String(e));
+      setReassignStatus("error");
+    }
+  }
+
   if (!ready) return null;
+
+  const manquants = adhesions.filter((a) => a.code_zk === null).length;
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
@@ -132,6 +158,58 @@ export default function HelloAssoAdminPage() {
           <div className="flex items-center gap-3 bg-red-900/40 border border-red-700 text-red-300 rounded-xl px-5 py-4 text-sm">
             <span className="text-lg">✕</span>
             <span>Erreur : {syncError}</span>
+          </div>
+        )}
+
+        {/* Reassign ZK card */}
+        <div className="bg-gray-900 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-lg">
+          <div className="flex-1">
+            <h2 className="font-semibold text-white text-lg">Réassigner les codes ZK manquants</h2>
+            <p className="text-sm text-gray-400 mt-0.5">
+              Attribue un code ZK aux adhésions qui n&apos;en ont pas encore.
+              {manquants > 0 && (
+                <span className="ml-2 text-amber-400 font-semibold">{manquants} adhésion{manquants > 1 ? "s" : ""} sans code ZK.</span>
+              )}
+              {manquants === 0 && !loadingList && (
+                <span className="ml-2 text-green-400 font-semibold">Toutes les adhésions ont un code ZK.</span>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={handleReassign}
+            disabled={reassignStatus === "loading" || manquants === 0}
+            className="shrink-0 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl transition text-sm"
+          >
+            {reassignStatus === "loading" ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Assignation…
+              </span>
+            ) : (
+              "Réassigner"
+            )}
+          </button>
+        </div>
+
+        {/* Reassign feedback */}
+        {reassignStatus === "success" && reassignResult && (
+          <div className="flex items-center gap-3 bg-green-900/40 border border-green-700 text-green-300 rounded-xl px-5 py-4 text-sm">
+            <span className="text-lg">✓</span>
+            <span>
+              <strong>{reassignResult.assigned}</strong> code{reassignResult.assigned > 1 ? "s" : ""} ZK assigné{reassignResult.assigned > 1 ? "s" : ""}.
+              {reassignResult.skipped > 0 && (
+                <span className="text-amber-300 ml-2">({reassignResult.skipped} ignorée{reassignResult.skipped > 1 ? "s" : ""} — pool épuisé)</span>
+              )}
+            </span>
+          </div>
+        )}
+        {reassignStatus === "error" && (
+          <div className="flex items-center gap-3 bg-red-900/40 border border-red-700 text-red-300 rounded-xl px-5 py-4 text-sm">
+            <span className="text-lg">✕</span>
+            <span>Erreur : {reassignError}</span>
           </div>
         )}
 
