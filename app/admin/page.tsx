@@ -38,12 +38,24 @@ const PAGES = [
     ),
     color: "emerald",
   },
+  {
+    href: "/admin/sports",
+    title: "Gestion des sports",
+    description: "Ajouter, modifier ou supprimer les disciplines disponibles (judo, MMA, boxe…).",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    ),
+    color: "rose",
+  },
 ];
 
 const colorMap: Record<string, string> = {
   indigo: "bg-indigo-900/40 text-indigo-400 group-hover:bg-indigo-800/60",
   violet: "bg-violet-900/40 text-violet-400 group-hover:bg-violet-800/60",
   emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
+  rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
 };
 
 export default function AdminPage() {
