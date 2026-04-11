@@ -37,6 +37,14 @@ export default function HeaderNav() {
   if (user) {
     return (
       <div className="flex items-center gap-2">
+        {user.role === "admin" && (
+          <Link
+            href="/admin"
+            className="text-white text-sm font-semibold px-3 py-2 rounded-full border border-white/40 hover:bg-white/10 transition"
+          >
+            Admin
+          </Link>
+        )}
         <Link
           href="/profil"
           className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-200 transition"
