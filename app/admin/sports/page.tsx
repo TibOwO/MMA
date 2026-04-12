@@ -3,14 +3,31 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface Horaire {
+  id: number;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
+  description: string;
+}
+
 interface Discipline {
   key: string;
   name: string;
   presentation: string;
+  tarif: string;
   helloasso_url: string;
+  horaires: Horaire[];
 }
 
-const EMPTY_FORM = { key: "", name: "", presentation: "", helloasso_url: "" };
+const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+const JOURS_LABEL: Record<string, string> = {
+  lundi: "Lundi", mardi: "Mardi", mercredi: "Mercredi", jeudi: "Jeudi",
+  vendredi: "Vendredi", samedi: "Samedi", dimanche: "Dimanche",
+};
+
+const EMPTY_FORM = { key: "", name: "", presentation: "", tarif: "", helloasso_url: "" };
+const EMPTY_HORAIRE = { jour: "lundi", heure_debut: "", heure_fin: "", description: "" };
 
 export default function AdminSportsPage() {
   const router = useRouter();
@@ -18,16 +35,20 @@ export default function AdminSportsPage() {
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Formulaire création / édition
   const [mode, setMode] = useState<"idle" | "create" | "edit">("idle");
   const [form, setForm] = useState(EMPTY_FORM);
   const [editKey, setEditKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Suppression
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Horaires panel
+  const [horairesPanelKey, setHorairesPanelKey] = useState<string | null>(null);
+  const [newHoraire, setNewHoraire] = useState(EMPTY_HORAIRE);
+  const [addingHoraire, setAddingHoraire] = useState(false);
+  const [horaireError, setHoraireError] = useState("");
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -53,10 +74,11 @@ export default function AdminSportsPage() {
     setForm(EMPTY_FORM);
     setFormError("");
     setMode("create");
+    setHorairesPanelKey(null);
   }
 
   function openEdit(d: Discipline) {
-    setForm({ key: d.key, name: d.name, presentation: d.presentation, helloasso_url: d.helloasso_url });
+    setForm({ key: d.key, name: d.name, presentation: d.presentation, tarif: d.tarif, helloasso_url: d.helloasso_url });
     setEditKey(d.key);
     setFormError("");
     setMode("edit");
@@ -96,11 +118,42 @@ export default function AdminSportsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setDeleteKey(null);
+        if (horairesPanelKey === key) setHorairesPanelKey(null);
         loadDisciplines();
       }
     } finally {
       setDeleting(false);
     }
+  }
+
+  async function handleAddHoraire(key: string) {
+    if (!newHoraire.heure_debut || !newHoraire.heure_fin) {
+      setHoraireError("Heure de début et de fin obligatoires.");
+      return;
+    }
+    setAddingHoraire(true);
+    setHoraireError("");
+    try {
+      const res = await fetch(`/api/disciplines/${key}/horaires`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newHoraire),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setHoraireError(data.error ?? "Erreur");
+      } else {
+        setNewHoraire(EMPTY_HORAIRE);
+        loadDisciplines();
+      }
+    } finally {
+      setAddingHoraire(false);
+    }
+  }
+
+  async function handleDeleteHoraire(id: number) {
+    await fetch(`/api/horaires/${id}`, { method: "DELETE" });
+    loadDisciplines();
   }
 
   if (!ready) return null;
@@ -114,7 +167,7 @@ export default function AdminSportsPage() {
           <div>
             <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;administration</a>
             <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des sports</h1>
-            <p className="text-gray-400 mt-1 text-sm">Ajouter, modifier ou supprimer les disciplines du club.</p>
+            <p className="text-gray-400 mt-1 text-sm">Disciplines, tarifs et créneaux horaires.</p>
           </div>
           <button
             onClick={openCreate}
@@ -151,6 +204,15 @@ export default function AdminSportsPage() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Judo"
+                  className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Tarif <span className="text-gray-600">(ex: 300 €)</span></label>
+                <input
+                  value={form.tarif}
+                  onChange={(e) => setForm((f) => ({ ...f, tarif: e.target.value }))}
+                  placeholder="300 €"
                   className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition"
                 />
               </div>
@@ -241,35 +303,132 @@ export default function AdminSportsPage() {
           ) : (
             <div className="divide-y divide-gray-800">
               {disciplines.map((d) => (
-                <div key={d.key} className="flex items-start justify-between gap-4 px-6 py-4 hover:bg-gray-800/40 transition">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-white">{d.name}</span>
-                      <span className="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{d.key}</span>
+                <div key={d.key}>
+                  {/* Row */}
+                  <div className="flex items-start justify-between gap-4 px-6 py-4 hover:bg-gray-800/40 transition">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-white">{d.name}</span>
+                        <span className="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{d.key}</span>
+                        {d.tarif && <span className="text-xs text-emerald-400 bg-emerald-900/30 px-2 py-0.5 rounded">{d.tarif}</span>}
+                        <span className="text-xs text-gray-500">{d.horaires.length} créneau{d.horaires.length !== 1 ? "x" : ""}</span>
+                      </div>
+                      {d.presentation && (
+                        <p className="text-xs text-gray-400 truncate max-w-md">{d.presentation}</p>
+                      )}
                     </div>
-                    {d.presentation && (
-                      <p className="text-xs text-gray-400 truncate max-w-md">{d.presentation}</p>
-                    )}
-                    {d.helloasso_url ? (
-                      <p className="text-xs text-indigo-400 truncate max-w-md">✓ Widget HelloAsso configuré</p>
-                    ) : (
-                      <p className="text-xs text-amber-500">⚠ URL HelloAsso manquante</p>
-                    )}
+                    <div className="flex gap-2 shrink-0 mt-0.5">
+                      <button
+                        onClick={() => { setHorairesPanelKey(horairesPanelKey === d.key ? null : d.key); setHoraireError(""); setNewHoraire(EMPTY_HORAIRE); }}
+                        className="text-xs text-teal-400 hover:text-teal-200 border border-teal-900 hover:border-teal-700 px-3 py-1.5 rounded-lg transition"
+                      >
+                        Horaires
+                      </button>
+                      <button
+                        onClick={() => openEdit(d)}
+                        className="text-xs text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition"
+                      >
+                        Modifier
+                      </button>
+                      <button
+                        onClick={() => setDeleteKey(d.key)}
+                        className="text-xs text-red-400 hover:text-red-300 border border-red-900 hover:border-red-700 px-3 py-1.5 rounded-lg transition"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0 mt-0.5">
-                    <button
-                      onClick={() => openEdit(d)}
-                      className="text-xs text-gray-300 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => setDeleteKey(d.key)}
-                      className="text-xs text-red-400 hover:text-red-300 border border-red-900 hover:border-red-700 px-3 py-1.5 rounded-lg transition"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
+
+                  {/* Horaires panel */}
+                  {horairesPanelKey === d.key && (
+                    <div className="bg-gray-800 px-6 pb-5 pt-3 space-y-4 border-t border-gray-700">
+                      <h3 className="text-sm font-semibold text-teal-300">Créneaux — {d.name}</h3>
+
+                      {d.horaires.length === 0 ? (
+                        <p className="text-xs text-gray-500">Aucun créneau configuré.</p>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-xs text-gray-400">
+                              <th className="text-left pb-1 font-medium">Jour</th>
+                              <th className="text-left pb-1 font-medium">Horaire</th>
+                              <th className="text-left pb-1 font-medium">Détail</th>
+                              <th />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {d.horaires.map((h) => (
+                              <tr key={h.id} className="border-t border-gray-700">
+                                <td className="py-2 capitalize text-gray-200">{JOURS_LABEL[h.jour] ?? h.jour}</td>
+                                <td className="py-2 text-gray-200">{h.heure_debut} – {h.heure_fin}</td>
+                                <td className="py-2 text-gray-400">{h.description}</td>
+                                <td className="py-2 text-right">
+                                  <button
+                                    onClick={() => handleDeleteHoraire(h.id)}
+                                    className="text-xs text-red-400 hover:text-red-300 transition"
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+
+                      {/* Add horaire form */}
+                      <div className="pt-2 border-t border-gray-700">
+                        <p className="text-xs text-gray-400 mb-2">Ajouter un créneau</p>
+                        <div className="flex flex-wrap gap-2 items-end">
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-xs text-gray-500">Jour</label>
+                            <select
+                              value={newHoraire.jour}
+                              onChange={(e) => setNewHoraire((h) => ({ ...h, jour: e.target.value }))}
+                              className="bg-gray-700 border border-gray-600 text-sm text-gray-100 rounded-lg px-3 py-2 focus:outline-none"
+                            >
+                              {JOURS.map((j) => <option key={j} value={j}>{JOURS_LABEL[j]}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-xs text-gray-500">Début</label>
+                            <input
+                              type="time"
+                              value={newHoraire.heure_debut}
+                              onChange={(e) => setNewHoraire((h) => ({ ...h, heure_debut: e.target.value }))}
+                              className="bg-gray-700 border border-gray-600 text-sm text-gray-100 rounded-lg px-3 py-2 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-xs text-gray-500">Fin</label>
+                            <input
+                              type="time"
+                              value={newHoraire.heure_fin}
+                              onChange={(e) => setNewHoraire((h) => ({ ...h, heure_fin: e.target.value }))}
+                              className="bg-gray-700 border border-gray-600 text-sm text-gray-100 rounded-lg px-3 py-2 focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <label className="text-xs text-gray-500">Détail (optionnel)</label>
+                            <input
+                              value={newHoraire.description}
+                              onChange={(e) => setNewHoraire((h) => ({ ...h, description: e.target.value }))}
+                              placeholder="Adultes, Enfants…"
+                              className="bg-gray-700 border border-gray-600 text-sm text-gray-100 rounded-lg px-3 py-2 focus:outline-none placeholder-gray-500"
+                            />
+                          </div>
+                          <button
+                            onClick={() => handleAddHoraire(d.key)}
+                            disabled={addingHoraire}
+                            className="bg-teal-700 hover:bg-teal-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition"
+                          >
+                            {addingHoraire ? "…" : "Ajouter"}
+                          </button>
+                        </div>
+                        {horaireError && <p className="text-red-400 text-xs mt-1">{horaireError}</p>}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -28,17 +28,6 @@ const PAGES = [
     color: "violet",
   },
   {
-    href: "/admin/disciplines",
-    title: "Disciplines",
-    description: "Gérer les disciplines du club : nom, présentation, tarifs et coachs associés.",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-    color: "emerald",
-  },
-  {
     href: "/admin/sports",
     title: "Gestion des sports",
     description: "Ajouter, modifier ou supprimer les disciplines disponibles (judo, MMA, boxe…).",
@@ -49,13 +38,24 @@ const PAGES = [
     ),
     color: "rose",
   },
+  {
+    href: "/admin/users",
+    title: "Utilisateurs",
+    description: "Promouvoir des membres au rôle de coach, assigner leurs disciplines et gérer leurs coordonnées.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.519M9 20H4v-2a4 4 0 015.916-3.519M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zM3 10a3 3 0 116 0 3 3 0 01-6 0z" />
+      </svg>
+    ),
+    color: "sky",
+  },
 ];
 
 const colorMap: Record<string, string> = {
   indigo: "bg-indigo-900/40 text-indigo-400 group-hover:bg-indigo-800/60",
   violet: "bg-violet-900/40 text-violet-400 group-hover:bg-violet-800/60",
-  emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
+  sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
 };
 
 export default function AdminPage() {

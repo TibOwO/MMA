@@ -4,10 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import DisciplinePage from "../../../components/DisciplinePage";
 
-interface Tarif {
-  nom: string;
-  prix: string;
-  horaires: string[];
+interface Horaire {
+  id: number;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
   description: string;
 }
 
@@ -15,14 +16,15 @@ interface Coach {
   id: number;
   prenom: string;
   nom: string;
+  telephone: string;
 }
 
 interface Discipline {
   key: string;
   name: string;
   presentation: string;
-  tarifs: Tarif[];
-  contact: string[];
+  tarif: string;
+  horaires: Horaire[];
   coaches: Coach[];
 }
 
@@ -52,5 +54,6 @@ export default function SportDynamicPage() {
 
   if (!discipline) return null;
 
-  return <DisciplinePage {...discipline} />;
+  const { key: _key, ...disciplineProps } = discipline;
+  return <DisciplinePage {...disciplineProps} horaires={discipline.horaires ?? []} coaches={discipline.coaches ?? []} />;
 }

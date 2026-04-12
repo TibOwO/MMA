@@ -1,18 +1,16 @@
 "use client";
 
 import { QRCodeSVG } from "qrcode.react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-const BASE_URL = "http://localhost:3000";
+interface Discipline {
+  key: string;
+  name: string;
+}
 
-const DISCIPLINES = [
-  { key: "judo", label: "Judo" },
-  { key: "boxe", label: "Boxe" },
-  { key: "mma", label: "MMA" },
-];
-
-function QRCard({ discipline }: { discipline: { key: string; label: string } }) {
-  const url = `${BASE_URL}/adhesion?discipline=${discipline.key}`;
+function QRCard({ discipline, baseUrl }: { discipline: Discipline; baseUrl: string }) {
+  const url = `${baseUrl}/adhesion?discipline=${discipline.key}`;
   const ref = useRef<HTMLDivElement>(null);
 
   function handlePrint() {
@@ -22,9 +20,9 @@ function QRCard({ discipline }: { discipline: { key: string; label: string } }) 
     const win = window.open("", "_blank");
     if (!win) return;
     win.document.write(`
-      <html><head><title>QR ${discipline.label}</title></head>
+      <html><head><title>QR ${discipline.name}</title></head>
       <body style="text-align:center;font-family:sans-serif;padding:40px">
-        <h2>${discipline.label}</h2>
+        <h2>${discipline.name}</h2>
         ${svgData}
         <p style="margin-top:12px;font-size:12px;color:#666">${url}</p>
       </body></html>
@@ -35,7 +33,7 @@ function QRCard({ discipline }: { discipline: { key: string; label: string } }) 
 
   return (
     <div className="bg-gray-900 rounded-2xl p-6 flex flex-col items-center gap-4">
-      <h2 className="text-xl font-bold">{discipline.label}</h2>
+      <h2 className="text-xl font-bold">{discipline.name}</h2>
       <div ref={ref} className="bg-white p-3 rounded-xl">
         <QRCodeSVG value={url} size={180} />
       </div>
@@ -51,20 +49,52 @@ function QRCard({ discipline }: { discipline: { key: string; label: string } }) 
 }
 
 export default function QRCodesPage() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (!raw) { router.replace("/login"); return; }
+    try {
+      const user = JSON.parse(raw);
+      if (user.role !== "admin") { router.replace("/"); return; }
+    } catch { router.replace("/login"); return; }
+    setBaseUrl(window.location.origin);
+    setReady(true);
+  }, [router]);
+
+  useEffect(() => {
+    if (!ready) return;
+    fetch("/api/disciplines")
+      .then((r) => r.json())
+      .then((data) => setDisciplines(data.disciplines ?? []))
+      .finally(() => setLoading(false));
+  }, [ready]);
+
+  if (!ready) return null;
+
   return (
     <main className="min-h-screen bg-gray-950 text-white px-6 py-10">
-      <h1 className="text-3xl font-bold mb-2">QR Codes — Adhésions</h1>
+      <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;administration</a>
+      <h1 className="text-3xl font-bold mt-4 mb-2">QR Codes — Adhésions</h1>
       <p className="text-gray-400 mb-8">
-        Affichez ces QR codes dans les locaux. Le scan redirige vers le formulaire HelloAsso de la discipline.
+        Affichez ces QR codes dans les locaux. Le scan redirige vers le formulaire d&apos;adhésion de la discipline.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
-        {DISCIPLINES.map((d) => (
-          <QRCard key={d.key} discipline={d} />
-        ))}
-      </div>
-      <p className="mt-10 text-xs text-gray-600">
-        Pour remplacer les URLs par les vraies URLs HelloAsso, modifiez <code>WIDGET_URLS</code> dans <code>app/adhesion/page.tsx</code>.
-      </p>
+      {loading ? (
+        <p className="text-gray-500">Chargement…</p>
+      ) : disciplines.length === 0 ? (
+        <p className="text-gray-500">Aucune discipline configurée.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+          {disciplines.map((d) => (
+            <QRCard key={d.key} discipline={d} baseUrl={baseUrl} />
+          ))}
+        </div>
+      )}
     </main>
   );
 }
+

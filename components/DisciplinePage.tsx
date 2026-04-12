@@ -1,10 +1,11 @@
 // src/components/DisciplinePage.tsx
 import React from "react";
 
-interface Tarif {
-  nom: string;
-  prix: string;
-  horaires: string[];
+interface Horaire {
+  id: number;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
   description: string;
 }
 
@@ -12,23 +13,41 @@ interface Coach {
   id: number;
   prenom: string;
   nom: string;
+  telephone: string;
 }
 
 interface DisciplineProps {
   name: string;
   presentation: string;
-  tarifs: Tarif[];
-  contact: string[];
+  tarif: string;
+  horaires: Horaire[];
   coaches: Coach[];
 }
 
-const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs, contact, coaches }) => {
+const JOURS_ORDER = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
+const JOURS_LABEL: Record<string, string> = {
+  lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi',
+  jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi', dimanche: 'Dimanche',
+};
+
+const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarif, horaires, coaches }) => {
+  const sortedHoraires = [...horaires].sort(
+    (a, b) => JOURS_ORDER.indexOf(a.jour) - JOURS_ORDER.indexOf(b.jour)
+  );
+
   return (
     <div className="container mx-auto p-6 space-y-12 bg-gray-900 min-h-screen text-gray-100">
-      {/* Header du sport */}
+      {/* Header */}
       <div className="bg-gray-800 rounded-xl p-8 shadow-md">
         <h1 className="text-5xl font-extrabold mb-4 capitalize text-indigo-300">{name}</h1>
         <p className="text-lg text-gray-300 max-w-3xl">{presentation}</p>
+        {tarif && (
+          <div className="mt-5 inline-flex items-center gap-2 bg-indigo-900/50 border border-indigo-700 rounded-xl px-5 py-3">
+            <span className="text-indigo-300 text-sm font-medium">Tarif</span>
+            <span className="text-white text-xl font-bold">{tarif}</span>
+          </div>
+        )}
       </div>
 
       {/* Coaches */}
@@ -39,59 +58,55 @@ const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarifs,
             {coaches.map((coach) => (
               <div
                 key={coach.id}
-                className="flex flex-col items-center w-32 p-4 rounded-xl bg-gray-800 shadow-md"
+                className="flex flex-col items-center w-40 p-4 rounded-xl bg-gray-800 shadow-md"
               >
                 <div className="w-16 h-16 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-200 text-xl font-bold">
-                  {coach.prenom[0]}{coach.nom.split(' ').pop()?.[0]}
+                  {coach.prenom[0]}{coach.nom[0]}
                 </div>
                 <span className="mt-3 text-center text-sm font-medium text-gray-100">
                   {coach.prenom} {coach.nom}
                 </span>
+                {coach.telephone && (
+                  <a
+                    href={`tel:${coach.telephone.replace(/\s/g, '')}`}
+                    className="mt-1 text-xs text-indigo-400 hover:text-indigo-200 transition"
+                  >
+                    📞 {coach.telephone}
+                  </a>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Tarifs & Horaires */}
-      <div>
-        <h2 className="text-3xl font-semibold mb-6 text-center text-indigo-300">Tarifs & Horaires</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tarifs.map((tarif) => (
-            <div
-              key={tarif.nom}
-              className="border border-gray-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 bg-gray-800"
-            >
-              <h3 className="text-2xl font-bold text-indigo-200 mb-2">{tarif.nom}</h3>
-              <p className="text-lg font-semibold text-gray-100">{tarif.prix}</p>
-              {tarif.description && <p className="mt-2 text-gray-300">{tarif.description}</p>}
-              {tarif.horaires.length > 0 && (
-                <ul className="mt-3 list-disc list-inside text-gray-400">
-                  {tarif.horaires.map((h, idx) => (
-                    <li key={idx}>{h}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Contact */}
-      {contact.length > 0 && (
-        <div className="bg-gray-800 rounded-xl p-6 shadow-md">
-          <h2 className="text-2xl font-semibold mb-4 text-indigo-300">Contact</h2>
-          <ul className="space-y-1">
-            {contact.map((tel) => (
-              <li key={tel}>
-                <a href={`tel:${tel.replace(/\s/g, '')}`} className="text-gray-300 hover:text-white transition">
-                  📞 {tel}
-                </a>
-              </li>
-            ))}
-          </ul>
+      {/* Horaires */}
+      {sortedHoraires.length > 0 && (
+        <div>
+          <h2 className="text-3xl font-semibold mb-6 text-center text-indigo-300">Horaires</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-800">
+                  <th className="px-4 py-3 text-indigo-300">Jour</th>
+                  <th className="px-4 py-3 text-indigo-300">Horaire</th>
+                  <th className="px-4 py-3 text-indigo-300">Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedHoraires.map((h) => (
+                  <tr key={h.id} className="border-t border-gray-700 hover:bg-gray-800 transition">
+                    <td className="px-4 py-3 capitalize font-medium">{JOURS_LABEL[h.jour] ?? h.jour}</td>
+                    <td className="px-4 py-3">{h.heure_debut} – {h.heure_fin}</td>
+                    <td className="px-4 py-3 text-gray-400">{h.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+
     </div>
   );
 };
