@@ -45,7 +45,7 @@ export default function HeaderNav() {
             Admin
           </Link>
         )}
-        {(user.role === "coach" || user.role === "admin") && (
+        {(user.role === "coach") && (
           <Link
             href="/coach"
             className="text-white text-sm font-semibold px-3 py-2 rounded-full border border-teal-400/50 hover:bg-teal-400/10 transition"
