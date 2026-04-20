@@ -7,6 +7,7 @@ interface Discipline {
   key: string;
   name: string;
   presentation: string;
+  image_url: string;
 }
 
 export default function HomePage() {
@@ -39,7 +40,7 @@ export default function HomePage() {
               key={sport.key}
               name={sport.name}
               description={sport.presentation}
-              imageUrl={`/images/${sport.key}.jpg`}
+              imageUrl={sport.image_url}
               link={`/discipline/${sport.key}`}
             />
           ))}
