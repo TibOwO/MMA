@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +27,8 @@ export default function LoginPage() {
 
       if (res.ok && data.success) {
         localStorage.setItem("user", JSON.stringify(data.user));
-        window.location.href = "/";
+        const next = searchParams.get("next");
+        router.replace(next || "/");
       } else {
         setError(data.error || "Email ou mot de passe incorrect.");
       }

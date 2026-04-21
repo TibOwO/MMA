@@ -2,10 +2,12 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useRef, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 
 function AdhesionContent() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const disciplineKey = searchParams.get('discipline') ?? '';
 
@@ -18,12 +20,24 @@ function AdhesionContent() {
       setError('Aucune discipline spécifiée.');
       return;
     }
-    fetch(`/api/disciplines/${disciplineKey}`)
+
+    // L'adhésion est réservée aux utilisateurs connectés.
+    fetch('/api/mon-profil')
+      .then((res) => {
+        if (res.status === 401) {
+          router.replace(`/login?next=${encodeURIComponent(`/adhesion?discipline=${disciplineKey}`)}`);
+          return null;
+        }
+        if (!res.ok) throw new Error('Session invalide');
+        return fetch(`/api/disciplines/${disciplineKey}`);
+      })
       .then((r) => {
+        if (!r) return null;
         if (!r.ok) throw new Error('Discipline introuvable');
         return r.json();
       })
       .then((data) => {
+        if (!data) return;
         setLabel(data.name ?? disciplineKey);
         if (!data.helloasso_url) {
           setError("Le formulaire d'adhésion n'est pas encore configuré pour cette discipline.");
@@ -32,7 +46,7 @@ function AdhesionContent() {
         }
       })
       .catch(() => setError('Discipline introuvable.'));
-  }, [disciplineKey]);
+  }, [disciplineKey, router]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
