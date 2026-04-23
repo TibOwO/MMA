@@ -9,7 +9,6 @@ interface ZKRule {
   code_min: number;
   code_max: number;
   fin_saison: string; // ISO date, only day+month matter
-  actif: boolean;
   libres: number;
   actifs: number;
 }
@@ -142,7 +141,6 @@ export default function AdminZKPage() {
           code_min: Number(codeMin),
           code_max: Number(codeMax),
           fin_saison: finSaisonDate,
-          actif: true,
         }),
       });
       const data = await res.json();
@@ -158,25 +156,6 @@ export default function AdminZKPage() {
       setError(String(e));
     } finally {
       setCreating(false);
-    }
-  }
-
-  async function toggleRule(rule: ZKRule) {
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/zk-rules/${rule.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actif: !rule.actif }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setError(data.error || "Erreur lors de la mise à jour.");
-        return;
-      }
-      await loadRules();
-    } catch (e) {
-      setError(String(e));
     }
   }
 
@@ -366,7 +345,6 @@ export default function AdminZKPage() {
                     <th className="px-6 py-3">Fin saison</th>
                     <th className="px-6 py-3">Libres</th>
                     <th className="px-6 py-3">Actifs</th>
-                    <th className="px-6 py-3">Statut</th>
                     <th className="px-6 py-3">Actions</th>
                   </tr>
                 </thead>
@@ -381,15 +359,7 @@ export default function AdminZKPage() {
                       <td className="px-6 py-3 text-green-300 font-semibold">{r.libres}</td>
                       <td className="px-6 py-3 text-indigo-300 font-semibold">{r.actifs}</td>
                       <td className="px-6 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${r.actif ? "bg-green-900/60 text-green-200" : "bg-gray-700 text-gray-300"}`}>
-                          {r.actif ? "Actif" : "Inactif"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3">
                         <div className="flex gap-3">
-                          <button onClick={() => toggleRule(r)} className="text-blue-300 hover:text-blue-200">
-                            {r.actif ? "Désactiver" : "Activer"}
-                          </button>
                           <button onClick={() => deleteRule(r.id)} className="text-red-300 hover:text-red-200">
                             Supprimer
                           </button>

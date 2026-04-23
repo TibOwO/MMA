@@ -14,7 +14,6 @@ interface HelloAssoMapping {
   discipline_key: string;
   discipline_name: string;
   groupe: string;
-  actif: boolean;
 }
 
 export default function AdminHelloAssoMappingsPage() {
@@ -37,7 +36,6 @@ export default function AdminHelloAssoMappingsPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editGroupe, setEditGroupe] = useState("");
   const [editDisciplineKey, setEditDisciplineKey] = useState("");
-  const [editActif, setEditActif] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
@@ -130,7 +128,6 @@ export default function AdminHelloAssoMappingsPage() {
     setEditId(m.id);
     setEditGroupe(m.groupe);
     setEditDisciplineKey(m.discipline_key);
-    setEditActif(m.actif);
     setSaveError("");
     setSaveOk(false);
   }
@@ -147,7 +144,6 @@ export default function AdminHelloAssoMappingsPage() {
         body: JSON.stringify({
           groupe: editGroupe,
           discipline_key: editDisciplineKey,
-          actif: editActif,
         }),
       });
       const data = await res.json();
@@ -163,7 +159,6 @@ export default function AdminHelloAssoMappingsPage() {
                 groupe: data.groupe,
                 discipline_key: data.discipline_key,
                 discipline_name: data.discipline_name,
-                actif: data.actif,
               }
             : m
         )
@@ -273,9 +268,6 @@ export default function AdminHelloAssoMappingsPage() {
                     Groupe
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-200">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-200">
                     Actions
                   </th>
                 </tr>
@@ -294,17 +286,6 @@ export default function AdminHelloAssoMappingsPage() {
                     </td>
                     <td className="px-6 py-3 text-sm text-gray-300">
                       {m.groupe}
-                    </td>
-                    <td className="px-6 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          m.actif
-                            ? "bg-green-900 text-green-200"
-                            : "bg-gray-700 text-gray-300"
-                        }`}
-                      >
-                        {m.actif ? "Actif" : "Inactif"}
-                      </span>
                     </td>
                     <td className="px-6 py-3 text-sm">
                       <button
@@ -461,22 +442,6 @@ export default function AdminHelloAssoMappingsPage() {
                     onChange={(e) => setEditGroupe(e.target.value)}
                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-gray-100 focus:outline-none focus:border-blue-500"
                   />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="actif"
-                    checked={editActif}
-                    onChange={(e) => setEditActif(e.target.checked)}
-                    className="w-4 h-4 rounded bg-gray-700 border-gray-600 cursor-pointer"
-                  />
-                  <label
-                    htmlFor="actif"
-                    className="text-sm font-semibold text-gray-300 cursor-pointer"
-                  >
-                    Actif
-                  </label>
                 </div>
 
                 {saveError && (
