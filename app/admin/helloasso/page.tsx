@@ -11,6 +11,8 @@ interface Adhesion {
   saison: string;
   statut: string;
   discipline: string | null;
+  groupe: string;
+  date_expiration: string | null;
   code_zk: number | null;
   ha_order_id: string;
 }
@@ -109,7 +111,7 @@ export default function HelloAssoAdminPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-extrabold text-indigo-300">Synchronisation HelloAsso</h1>
+          <h1 className="text-3xl font-extrabold text-indigo-300">Adhesions</h1>
           <p className="text-gray-400 mt-1 text-sm">
             Importe les commandes HelloAsso manquantes dans la base de données.
           </p>
@@ -244,7 +246,9 @@ export default function HelloAssoAdminPage() {
                     <th className="text-left px-6 py-3">Membre</th>
                     <th className="text-left px-6 py-3">Email</th>
                     <th className="text-left px-6 py-3">Saison</th>
+                    <th className="text-left px-6 py-3">Expiration</th>
                     <th className="text-left px-6 py-3">Discipline</th>
+                    <th className="text-left px-6 py-3">Groupe</th>
                     <th className="text-left px-6 py-3">Code ZK</th>
                     <th className="text-left px-6 py-3">Statut</th>
                     <th className="text-left px-6 py-3">ID HelloAsso</th>
@@ -258,7 +262,9 @@ export default function HelloAssoAdminPage() {
                       </td>
                       <td className="px-6 py-4 text-gray-400">{a.email}</td>
                       <td className="px-6 py-4 text-gray-300">{a.saison}</td>
+                      <td className="px-6 py-4 text-gray-300">{a.date_expiration ? new Date(a.date_expiration).toLocaleDateString("fr-FR") : <span className="text-gray-600">—</span>}</td>
                       <td className="px-6 py-4 text-gray-300">{a.discipline ?? <span className="text-gray-600">—</span>}</td>
+                      <td className="px-6 py-4 text-gray-300">{a.groupe || <span className="text-gray-600">—</span>}</td>
                       <td className="px-6 py-4">
                         {a.code_zk != null ? (
                           <span className="font-mono bg-gray-800 text-indigo-300 px-2 py-0.5 rounded">
@@ -273,10 +279,12 @@ export default function HelloAssoAdminPage() {
                           className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                             a.statut === "payee"
                               ? "bg-green-900 text-green-300"
+                              : a.statut === "expiree"
+                              ? "bg-amber-900 text-amber-300"
                               : "bg-red-900 text-red-300"
                           }`}
                         >
-                          {a.statut === "payee" ? "Payée" : "Remboursée"}
+                          {a.statut === "payee" ? "Payée" : a.statut === "expiree" ? "Expirée" : "Remboursée"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600 font-mono text-xs">{a.ha_order_id}</td>

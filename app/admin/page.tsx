@@ -7,7 +7,7 @@ import Link from "next/link";
 const PAGES = [
   {
     href: "/admin/helloasso",
-    title: "Synchronisation HelloAsso",
+    title: "Adhesions",
     description: "Importer les commandes HelloAsso, consulter les adhésions et réassigner les codes ZK manquants.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -60,6 +60,17 @@ const PAGES = [
     ),
     color: "emerald",
   },
+  {
+    href: "/admin/zk",
+    title: "Gestion ZK",
+    description: "Configurer les pools de codes et la date de fin de saison par groupe.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4zM9 12l2 2 4-4" />
+      </svg>
+    ),
+    color: "amber",
+  },
 ];
 
 const colorMap: Record<string, string> = {
@@ -68,6 +79,7 @@ const colorMap: Record<string, string> = {
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
   emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
+  amber: "bg-amber-900/40 text-amber-400 group-hover:bg-amber-800/60",
 };
 
 export default function AdminPage() {
