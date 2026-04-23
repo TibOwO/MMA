@@ -49,6 +49,17 @@ const PAGES = [
     ),
     color: "sky",
   },
+  {
+    href: "/admin/mapping",
+    title: "Mappings HelloAsso",
+    description: "Gérer les correspondances entre les labels HelloAsso et les disciplines/groupe.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h6m-6 4h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+      </svg>
+    ),
+    color: "emerald",
+  },
 ];
 
 const colorMap: Record<string, string> = {
@@ -56,6 +67,7 @@ const colorMap: Record<string, string> = {
   violet: "bg-violet-900/40 text-violet-400 group-hover:bg-violet-800/60",
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
+  emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
 };
 
 export default function AdminPage() {
