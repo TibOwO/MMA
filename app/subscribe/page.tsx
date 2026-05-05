@@ -49,6 +49,7 @@ export default function SubscribePage() {
 
       if (res.ok && data.success) {
         localStorage.setItem("user", JSON.stringify(data.user));
+        window.dispatchEvent(new Event("userChanged"));
         router.push("/profil");
       } else {
         setError(data.error || "Une erreur est survenue.");

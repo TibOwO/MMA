@@ -16,7 +16,6 @@ interface Discipline {
   name: string;
   presentation: string;
   tarif: string;
-  helloasso_url: string;
   image_url: string;
   horaires: Horaire[];
 }
@@ -27,7 +26,7 @@ const JOURS_LABEL: Record<string, string> = {
   vendredi: "Vendredi", samedi: "Samedi", dimanche: "Dimanche",
 };
 
-const EMPTY_FORM = { key: "", name: "", presentation: "", tarif: "", helloasso_url: "", image_url: "" };
+const EMPTY_FORM = { key: "", name: "", presentation: "", tarif: "", image_url: "" };
 const EMPTY_HORAIRE = { jour: "lundi", heure_debut: "", heure_fin: "", description: "" };
 
 export default function AdminSportsPage() {
@@ -79,7 +78,7 @@ export default function AdminSportsPage() {
   }
 
   function openEdit(d: Discipline) {
-    setForm({ key: d.key, name: d.name, presentation: d.presentation, tarif: d.tarif, helloasso_url: d.helloasso_url, image_url: d.image_url });
+    setForm({ key: d.key, name: d.name, presentation: d.presentation, tarif: d.tarif, image_url: d.image_url });
     setEditKey(d.key);
     setFormError("");
     setMode("edit");
@@ -227,17 +226,6 @@ export default function AdminSportsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, presentation: e.target.value }))}
                 placeholder="Description de la discipline…"
                 className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition resize-none"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-400">URL widget HelloAsso</label>
-              <input
-                type="url"
-                value={form.helloasso_url}
-                onChange={(e) => setForm((f) => ({ ...f, helloasso_url: e.target.value }))}
-                placeholder="https://www.helloasso.com/associations/…/widget"
-                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition"
               />
             </div>
 

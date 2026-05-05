@@ -17,17 +17,6 @@ const PAGES = [
     color: "indigo",
   },
   {
-    href: "/admin/qrcodes",
-    title: "QR Codes — Adhésions",
-    description: "Générer et imprimer les QR codes à afficher dans les locaux pour chaque discipline.",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-      </svg>
-    ),
-    color: "violet",
-  },
-  {
     href: "/admin/sports",
     title: "Gestion des sports",
     description: "Ajouter, modifier ou supprimer les disciplines disponibles (judo, MMA, boxe…).",
@@ -50,20 +39,9 @@ const PAGES = [
     color: "sky",
   },
   {
-    href: "/admin/mapping",
-    title: "Mappings HelloAsso",
-    description: "Gérer les correspondances entre les labels HelloAsso et les disciplines/groupe.",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h6m-6 4h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
-      </svg>
-    ),
-    color: "emerald",
-  },
-  {
     href: "/admin/zk",
     title: "Gestion ZK",
-    description: "Configurer les pools de codes et la date de fin de saison par groupe.",
+    description: "Configurer les pools de codes et la date de fin de saison par discipline.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4zM9 12l2 2 4-4" />

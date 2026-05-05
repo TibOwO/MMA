@@ -11,7 +11,6 @@ interface Adhesion {
   saison: string;
   statut: string;
   discipline: string | null;
-  groupe: string;
   date_expiration: string | null;
   code_zk: number | null;
   ha_order_id: string;
@@ -264,7 +263,6 @@ export default function HelloAssoAdminPage() {
                       <td className="px-6 py-4 text-gray-300">{a.saison}</td>
                       <td className="px-6 py-4 text-gray-300">{a.date_expiration ? new Date(a.date_expiration).toLocaleDateString("fr-FR") : <span className="text-gray-600">—</span>}</td>
                       <td className="px-6 py-4 text-gray-300">{a.discipline ?? <span className="text-gray-600">—</span>}</td>
-                      <td className="px-6 py-4 text-gray-300">{a.groupe || <span className="text-gray-600">—</span>}</td>
                       <td className="px-6 py-4">
                         {a.code_zk != null ? (
                           <span className="font-mono bg-gray-800 text-indigo-300 px-2 py-0.5 rounded">

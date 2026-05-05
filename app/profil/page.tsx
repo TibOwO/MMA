@@ -96,16 +96,33 @@ export default function ProfilPage() {
               </h2>
               <InfoRow label="Saison" value={a.saison} />
               <InfoRow label="Statut" value={a.statut} />
-              {a.code_zk !== null && (
+              {a.code_zk !== null ? (
                 <>
                   <InfoRow label="Code ZK" value={String(a.code_zk)} />
                   <div className="flex flex-col items-center gap-3 pt-2">
-                    <p className="text-sm text-gray-400">QR Code d&apos;accès</p>
+                    <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
                     <div className="bg-white p-3 rounded-xl">
                       <QRCodeSVG value={String(a.code_zk)} size={160} />
                     </div>
+                    <p className="text-xs text-gray-500 text-center max-w-xs">
+                      Scannez ce QR code au portique pour accéder au club
+                    </p>
                   </div>
                 </>
+              ) : (
+                <div className="bg-amber-900/20 border border-amber-800/50 rounded-xl p-4 mt-2">
+                  <div className="flex gap-3">
+                    <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div className="text-sm text-amber-200">
+                      <p className="font-semibold">QR code non disponible</p>
+                      <p className="text-amber-300 mt-1">
+                        Le code d&apos;accès au portique n&apos;a pas encore été configuré pour cette discipline. Contactez un administrateur.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           ))

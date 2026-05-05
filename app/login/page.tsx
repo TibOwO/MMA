@@ -27,6 +27,7 @@ export default function LoginPage() {
 
       if (res.ok && data.success) {
         localStorage.setItem("user", JSON.stringify(data.user));
+        window.dispatchEvent(new Event("userChanged"));
         const next = searchParams.get("next");
         router.replace(next || "/");
       } else {

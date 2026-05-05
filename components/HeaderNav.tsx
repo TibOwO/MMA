@@ -16,21 +16,52 @@ export default function HeaderNav() {
   const [user, setUser] = useState<StoredUser | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
+  // Fonction pour charger l'utilisateur depuis localStorage
+  const loadUser = () => {
     const raw = localStorage.getItem("user");
     if (raw) {
       try {
         setUser(JSON.parse(raw));
       } catch {
         localStorage.removeItem("user");
+        setUser(null);
       }
+    } else {
+      setUser(null);
     }
+  };
+
+  useEffect(() => {
+    // Chargement initial
+    loadUser();
+
+    // Écouter les changements de localStorage (connexion/déconnexion)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user") {
+        loadUser();
+      }
+    };
+
+    // Écouter un événement personnalisé pour les changements dans le même onglet
+    const handleUserChange = () => {
+      loadUser();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("userChanged", handleUserChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userChanged", handleUserChange);
+    };
   }, []);
 
   async function handleLogout() {
     await fetch("/api/logout", { method: "POST" });
     localStorage.removeItem("user");
     setUser(null);
+    // Déclencher l'événement pour notifier les autres composants
+    window.dispatchEvent(new Event("userChanged"));
     router.push("/");
   }
 
