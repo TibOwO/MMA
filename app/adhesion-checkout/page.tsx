@@ -21,6 +21,10 @@ export default function AdhesionCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [processingKey, setProcessingKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  
+  // Modal de choix du mode de paiement
+  const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | null>(null);
+  const [showPaymentChoice, setShowPaymentChoice] = useState(false);
 
   useEffect(() => {
     // Vérifier que l'utilisateur est connecté
@@ -55,15 +59,39 @@ export default function AdhesionCheckoutPage() {
     }
   }, [error]);
 
-  const handleInitializeCheckout = async (disciplineKey: string) => {
+  // Extraire le montant numérique du tarif (ex: "300 €" -> 300)
+  const extractAmount = (tarif: string): number => {
+    const match = tarif.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  };
+
+  // Afficher la modal de choix de paiement
+  const handleDisciplineClick = (discipline: Discipline) => {
+    const amount = extractAmount(discipline.tarif);
+    
+    // Si montant < 90€, paiement comptant direct (pas assez pour 3 fois)
+    if (amount < 90) {
+      handleInitializeCheckout(discipline.key, false);
+    } else {
+      // Sinon, proposer le choix
+      setSelectedDiscipline(discipline);
+      setShowPaymentChoice(true);
+    }
+  };
+
+  const handleInitializeCheckout = async (disciplineKey: string, enableInstallments: boolean) => {
     setProcessingKey(disciplineKey);
     setErrorMessage('');
+    setShowPaymentChoice(false);
 
     try {
       const res = await fetch('/api/adhesion/initialize-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ discipline_key: disciplineKey }),
+        body: JSON.stringify({ 
+          discipline_key: disciplineKey,
+          enable_installments: enableInstallments 
+        }),
       });
 
       const data = await res.json();
@@ -131,7 +159,7 @@ export default function AdhesionCheckoutPage() {
                   </p>
                 )}
                 <button
-                  onClick={() => handleInitializeCheckout(discipline.key)}
+                  onClick={() => handleDisciplineClick(discipline)}
                   disabled={processingKey === discipline.key}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors"
                 >
@@ -154,6 +182,71 @@ export default function AdhesionCheckoutPage() {
           <li>Vous recevrez un code d'accès pour le portique du club</li>
         </ol>
       </div>
+
+      {/* Modal de choix du mode de paiement */}
+      {showPaymentChoice && selectedDiscipline && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-2">{selectedDiscipline.name}</h2>
+            <p className="text-gray-600 mb-6">
+              Tarif : <span className="font-semibold text-blue-600">{selectedDiscipline.tarif}</span>
+            </p>
+
+            <h3 className="text-lg font-semibold mb-4">Choisissez votre mode de paiement</h3>
+
+            <div className="space-y-3 mb-6">
+              {/* Option paiement comptant */}
+              <button
+                onClick={() => handleInitializeCheckout(selectedDiscipline.key, false)}
+                disabled={!!processingKey}
+                className="w-full text-left border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded-xl p-4 transition-all disabled:opacity-50"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💳</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">Paiement comptant</div>
+                    <div className="text-sm text-gray-600">
+                      Paiement en une seule fois : {selectedDiscipline.tarif}
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Option paiement en 3 fois */}
+              <button
+                onClick={() => handleInitializeCheckout(selectedDiscipline.key, true)}
+                disabled={!!processingKey}
+                className="w-full text-left border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 rounded-xl p-4 transition-all disabled:opacity-50"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">📅</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">Paiement en 3 fois</div>
+                    <div className="text-sm text-gray-600">
+                      3 mensualités de {Math.ceil(extractAmount(selectedDiscipline.tarif) / 3)}€
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                      ✓ Sans frais supplémentaires
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Bouton annuler */}
+            <button
+              onClick={() => {
+                setShowPaymentChoice(false);
+                setSelectedDiscipline(null);
+              }}
+              disabled={!!processingKey}
+              className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 disabled:opacity-50"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
