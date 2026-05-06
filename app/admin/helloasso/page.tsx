@@ -16,16 +16,11 @@ interface Adhesion {
   ha_order_id: string;
 }
 
-type SyncStatus = "idle" | "loading" | "success" | "error";
-
 export default function HelloAssoAdminPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [adhesions, setAdhesions] = useState<Adhesion[]>([]);
   const [loadingList, setLoadingList] = useState(true);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
-  const [syncResult, setSyncResult] = useState<{ created: number } | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     // Vérification synchrone via localStorage — évite le flash de redirection
@@ -55,27 +50,6 @@ export default function HelloAssoAdminPage() {
     loadAdhesions();
   }, [ready]);
 
-  async function handleSync() {
-    setSyncStatus("loading");
-    setSyncResult(null);
-    setSyncError(null);
-    try {
-      const res = await fetch("/api/helloasso/sync", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setSyncError(data.error ?? "Erreur inconnue");
-        setSyncStatus("error");
-      } else {
-        setSyncResult({ created: data.created });
-        setSyncStatus("success");
-        loadAdhesions();
-      }
-    } catch (e) {
-      setSyncError(String(e));
-      setSyncStatus("error");
-    }
-  }
-
   if (!ready) return null;
 
   return (
@@ -84,57 +58,11 @@ export default function HelloAssoAdminPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-extrabold text-indigo-300">Adhesions</h1>
+          <h1 className="text-3xl font-extrabold text-indigo-300">Adhésions</h1>
           <p className="text-gray-400 mt-1 text-sm">
-            Importe les commandes HelloAsso manquantes dans la base de données.
+            Les adhésions sont créées automatiquement via le webhook HelloAsso lors des paiements.
           </p>
         </div>
-
-        {/* Sync card */}
-        <div className="bg-gray-900 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-lg">
-          <div className="flex-1">
-            <h2 className="font-semibold text-white text-lg">Lancer une synchronisation</h2>
-            <p className="text-sm text-gray-400 mt-0.5">
-              Récupère toutes les commandes HelloAsso et crée les adhésions manquantes.
-              Les doublons sont ignorés automatiquement.
-            </p>
-          </div>
-          <button
-            onClick={handleSync}
-            disabled={syncStatus === "loading"}
-            className="shrink-0 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl transition text-sm"
-          >
-            {syncStatus === "loading" ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                Synchronisation…
-              </span>
-            ) : (
-              "Synchroniser"
-            )}
-          </button>
-        </div>
-
-        {/* Sync feedback */}
-        {syncStatus === "success" && syncResult && (
-          <div className="flex items-center gap-3 bg-green-900/40 border border-green-700 text-green-300 rounded-xl px-5 py-4 text-sm">
-            <span className="text-lg">✓</span>
-            <span>
-              Synchronisation terminée —{" "}
-              <strong>{syncResult.created}</strong>{" "}
-              {syncResult.created === 1 ? "nouvelle adhésion créée" : "nouvelles adhésions créées"}.
-            </span>
-          </div>
-        )}
-        {syncStatus === "error" && (
-          <div className="flex items-center gap-3 bg-red-900/40 border border-red-700 text-red-300 rounded-xl px-5 py-4 text-sm">
-            <span className="text-lg">✕</span>
-            <span>Erreur : {syncError}</span>
-          </div>
-        )}
 
         {/* Adhesions table */}
         <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
