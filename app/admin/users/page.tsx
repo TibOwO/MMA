@@ -8,14 +8,22 @@ interface Discipline {
   name: string;
 }
 
+interface Adhesion {
+  id: number;
+  discipline: string | null;
+  saison: string;
+  statut: string;
+  date_expiration: string | null;
+}
+
 interface User {
   id: number;
   nom: string;
   prenom: string;
   email: string;
-  telephone: string;
   role: string;
   disciplines: string[];
+  adhesions: Adhesion[];
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -42,7 +50,6 @@ export default function AdminUsersPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editRole, setEditRole] = useState("membre");
   const [editDisciplines, setEditDisciplines] = useState<string[]>([]);
-  const [editTelephone, setEditTelephone] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
@@ -74,7 +81,6 @@ export default function AdminUsersPage() {
     setEditId(u.id);
     setEditRole(u.role);
     setEditDisciplines(u.disciplines);
-    setEditTelephone(u.telephone);
     setSaveError("");
     setSaveOk(false);
   }
@@ -94,7 +100,7 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users/${editId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: editRole, disciplines: editDisciplines, telephone: editTelephone }),
+        body: JSON.stringify({ role: editRole, disciplines: editDisciplines }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -163,17 +169,6 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {/* Telephone */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-400">Téléphone <span className="text-gray-600">(affiché sur la page du sport)</span></label>
-              <input
-                value={editTelephone}
-                onChange={(e) => setEditTelephone(e.target.value)}
-                placeholder="06 12 34 56 78"
-                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition max-w-xs"
-              />
-            </div>
-
             {/* Disciplines */}
             {editRole === "coach" && (
               <div className="flex flex-col gap-1">
@@ -191,6 +186,41 @@ export default function AdminUsersPage() {
                     >
                       {d.name}
                     </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Adhésions */}
+            {editUser.adhesions.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Adhésions ({editUser.adhesions.length})</label>
+                <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                  {editUser.adhesions.map((a) => (
+                    <div key={a.id} className="flex items-center justify-between text-xs">
+                      <div className="flex-1">
+                        <span className="text-white font-medium">{a.discipline || 'Sans discipline'}</span>
+                        <span className="text-gray-500 ml-2">• {a.saison}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {a.date_expiration && (
+                          <span className="text-gray-400">
+                            {new Date(a.date_expiration).toLocaleDateString('fr-FR')}
+                          </span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-semibold ${
+                            a.statut === 'payee'
+                              ? 'bg-green-900 text-green-300'
+                              : a.statut === 'expiree'
+                              ? 'bg-amber-900 text-amber-300'
+                              : 'bg-red-900 text-red-300'
+                          }`}
+                        >
+                          {a.statut === 'payee' ? 'Payée' : a.statut === 'expiree' ? 'Expirée' : 'Remboursée'}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

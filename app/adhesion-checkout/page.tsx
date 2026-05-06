@@ -10,6 +10,7 @@ interface Discipline {
   presentation: string;
   tarif: string;
   image_url: string;
+  code_zk: number | null;
 }
 
 // Composant client qui utilise useSearchParams
@@ -64,6 +65,25 @@ function AdhesionCheckoutContent() {
   const extractAmount = (tarif: string): number => {
     const match = tarif.match(/(\d+)/);
     return match ? parseInt(match[1]) : 0;
+  };
+
+  // Vérifier si la discipline est prête pour l'adhésion
+  const isDisciplineReady = (discipline: Discipline): boolean => {
+    return discipline.tarif.trim() !== '' && discipline.code_zk !== null;
+  };
+
+  // Message d'erreur pour discipline non configurée
+  const getDisabledMessage = (discipline: Discipline): string => {
+    if (!discipline.tarif.trim() && discipline.code_zk === null) {
+      return 'Tarif et code ZK non configurés';
+    }
+    if (!discipline.tarif.trim()) {
+      return 'Tarif non configuré';
+    }
+    if (discipline.code_zk === null) {
+      return 'Code ZK non configuré';
+    }
+    return '';
   };
 
   // Afficher la modal de choix de paiement
@@ -159,13 +179,22 @@ function AdhesionCheckoutContent() {
                     {discipline.tarif}
                   </p>
                 )}
+                
+                {!isDisciplineReady(discipline) && (
+                  <p className="text-sm text-amber-600 mb-3 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                    ⚠️ {getDisabledMessage(discipline)}
+                  </p>
+                )}
+                
                 <button
                   onClick={() => handleDisciplineClick(discipline)}
-                  disabled={processingKey === discipline.key}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors"
+                  disabled={processingKey === discipline.key || !isDisciplineReady(discipline)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition-colors"
                 >
                   {processingKey === discipline.key
                     ? 'Redirection en cours...'
+                    : !isDisciplineReady(discipline)
+                    ? 'Non disponible'
                     : 'Adhérer à cette discipline'}
                 </button>
               </div>

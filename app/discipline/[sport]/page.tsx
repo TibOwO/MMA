@@ -16,7 +16,6 @@ interface Coach {
   id: number;
   prenom: string;
   nom: string;
-  telephone: string;
 }
 
 interface Discipline {

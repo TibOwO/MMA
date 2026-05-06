@@ -13,7 +13,6 @@ interface Coach {
   id: number;
   prenom: string;
   nom: string;
-  telephone: string;
 }
 
 interface DisciplineProps {
@@ -66,14 +65,6 @@ const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarif, 
                 <span className="mt-3 text-center text-sm font-medium text-gray-100">
                   {coach.prenom} {coach.nom}
                 </span>
-                {coach.telephone && (
-                  <a
-                    href={`tel:${coach.telephone.replace(/\s/g, '')}`}
-                    className="mt-1 text-xs text-indigo-400 hover:text-indigo-200 transition"
-                  >
-                    📞 {coach.telephone}
-                  </a>
-                )}
               </div>
             ))}
           </div>
