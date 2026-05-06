@@ -192,9 +192,11 @@ export default function AdminUsersPage() {
             )}
 
             {/* Adhésions */}
-            {editUser.adhesions.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400">Adhésions ({editUser.adhesions.length})</label>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-400">
+                Adhésions {editUser.adhesions.length > 0 && `(${editUser.adhesions.length})`}
+              </label>
+              {editUser.adhesions.length > 0 ? (
                 <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
                   {editUser.adhesions.map((a) => (
                     <div key={a.id} className="flex items-center justify-between text-xs">
@@ -223,8 +225,12 @@ export default function AdminUsersPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-500 text-center">
+                  Aucune adhésion enregistrée
+                </div>
+              )}
+            </div>
 
             {saveError && <p className="text-red-400 text-xs">{saveError}</p>}
             {saveOk && <p className="text-emerald-400 text-xs">Enregistré ✓</p>}

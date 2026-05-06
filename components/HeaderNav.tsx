@@ -85,6 +85,12 @@ export default function HeaderNav() {
           </Link>
         )}
         <Link
+          href="/adhesion-checkout"
+          className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition"
+        >
+          Adhérer
+        </Link>
+        <Link
           href="/profil"
           className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-200 transition"
         >
