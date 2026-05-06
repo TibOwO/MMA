@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Discipline {
@@ -12,7 +12,8 @@ interface Discipline {
   image_url: string;
 }
 
-export default function AdhesionCheckoutPage() {
+// Composant client qui utilise useSearchParams
+function AdhesionCheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
@@ -248,5 +249,20 @@ export default function AdhesionCheckoutPage() {
         </div>
       )}
     </main>
+  );
+}
+
+// Composant principal avec Suspense boundary
+export default function AdhesionCheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <p className="text-center text-gray-500">Chargement...</p>
+        </main>
+      }
+    >
+      <AdhesionCheckoutContent />
+    </Suspense>
   );
 }
