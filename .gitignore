@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files - CRITIQUE : Contiennent des secrets et configurations locales
+# .env.local est ignoré (fichier de développement local)
+# .env.example est COMMITÉ (template sans secrets)
 .env*
+!.env.example
 
 # vercel
 .vercel
