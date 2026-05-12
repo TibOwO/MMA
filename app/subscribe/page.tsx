@@ -24,8 +24,8 @@ export default function SubscribePage() {
     e.preventDefault();
     setError("");
 
-    if (form.password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
+    if (form.password.length < 3) {
+      setError("Le mot de passe doit contenir au moins 3 caractères.");
       return;
     }
     if (form.password !== form.confirm) {
