@@ -125,11 +125,11 @@ export default function SubscribePage() {
               name="password"
               type="password"
               required
-              minLength={8}
+              minLength={3}
               value={form.password}
               onChange={handleChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
-              placeholder="8 caractères minimum"
+              placeholder="•••"
             />
           </div>
 
@@ -142,10 +142,11 @@ export default function SubscribePage() {
               name="confirm"
               type="password"
               required
+              minLength={3}
               value={form.confirm}
               onChange={handleChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
-              placeholder="••••••••"
+              placeholder="•••"
             />
           </div>
 
