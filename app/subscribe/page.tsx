@@ -24,6 +24,22 @@ export default function SubscribePage() {
     e.preventDefault();
     setError("");
 
+    if (/\d/.test(form.nom)) {
+      setError("Le nom ne doit pas contenir de chiffres.");
+      return;
+    }
+    if (/\d/.test(form.prenom)) {
+      setError("Le prénom ne doit pas contenir de chiffres.");
+      return;
+    }
+    if (form.nom.toLowerCase() === 'test' || form.prenom.toLowerCase() === 'test') {
+      setError('Le nom et le prénom ne peuvent pas être "test".');
+      return;
+    }
+    if (form.nom.toLowerCase() === form.prenom.toLowerCase()) {
+      setError("Le nom et le prénom doivent être différents.");
+      return;
+    }
     if (form.password.length < 8) {
       setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
@@ -80,6 +96,8 @@ export default function SubscribePage() {
                 name="prenom"
                 type="text"
                 required
+                pattern="[^0-9]*"
+                title="Le prénom ne doit pas contenir de chiffres"
                 value={form.prenom}
                 onChange={handleChange}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
@@ -92,6 +110,8 @@ export default function SubscribePage() {
               <input
                 id="nom"
                 name="nom"
+                pattern="[^0-9]*"
+                title="Le nom ne doit pas contenir de chiffres"
                 type="text"
                 required
                 value={form.nom}
