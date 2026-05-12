@@ -24,8 +24,8 @@ export default function SubscribePage() {
     e.preventDefault();
     setError("");
 
-    if (form.password.length < 3) {
-      setError("Le mot de passe doit contenir au moins 3 caractères.");
+    if (form.password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
     }
     if (form.password !== form.confirm) {
@@ -125,11 +125,11 @@ export default function SubscribePage() {
               name="password"
               type="password"
               required
-              minLength={3}
+              minLength={8}
               value={form.password}
               onChange={handleChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
-              placeholder="•••"
+              placeholder="Minimum 8 caractères"
             />
           </div>
 
@@ -142,11 +142,11 @@ export default function SubscribePage() {
               name="confirm"
               type="password"
               required
-              minLength={3}
+              minLength={8}
               value={form.confirm}
               onChange={handleChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
-              placeholder="•••"
+              placeholder="Minimum 8 caractères"
             />
           </div>
 
