@@ -114,7 +114,7 @@ export default function AdminSportsPage() {
   async function handleDelete(key: string) {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/disciplines/${key}/delete`, { method: "DELETE" });
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/delete`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok && data.success) {
         setDeleteKey(null);
@@ -134,7 +134,7 @@ export default function AdminSportsPage() {
     setAddingHoraire(true);
     setHoraireError("");
     try {
-      const res = await fetch(`/api/disciplines/${key}/horaires`, {
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/horaires`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newHoraire),

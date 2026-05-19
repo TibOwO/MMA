@@ -34,7 +34,7 @@ export default function SportDynamicPage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/disciplines/${key}`)
+    fetch(`/api/disciplines/${encodeURIComponent(key)}`)
       .then((res) => {
         if (res.status === 404) { setNotFound(true); return null; }
         return res.json();

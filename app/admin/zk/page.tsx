@@ -45,7 +45,7 @@ export default function AdminZKPage() {
     setError("");
     
     try {
-      const res = await fetch(`/api/disciplines/${key}/edit`, {
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code_zk: codeZK }),
@@ -70,7 +70,7 @@ export default function AdminZKPage() {
     setError("");
     
     try {
-      const res = await fetch(`/api/disciplines/${key}/edit`, {
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fin_saison: finSaison }),

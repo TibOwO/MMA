@@ -69,7 +69,7 @@ export default function CoachPage() {
     setAddingHoraire(true);
     setHoraireError("");
     try {
-      const res = await fetch(`/api/disciplines/${key}/horaires`, {
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/horaires`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newHoraire),
@@ -99,7 +99,7 @@ export default function CoachPage() {
   async function handleSavePresentation(key: string) {
     setSavingPresentation(true);
     try {
-      const res = await fetch(`/api/disciplines/${key}/edit`, {
+      const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ presentation: editedPresentation }),
