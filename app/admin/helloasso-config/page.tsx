@@ -264,7 +264,6 @@ export default function HelloAssoConfigPage() {
                   client_id: "",
                   client_secret: "",
                   api_base: "https://api.helloasso-sandbox.com",
-                  form_slug: "",
                   organisation_slug: "",
                   active: true,
                 });
