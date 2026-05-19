@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             {/* Logo centré */}
             <Link href="/" className="flex items-center">
-              <img src="images/logo.jpg" alt="Logo Club MMA" className="h-15 w-auto cursor-pointer rounded-full" />
+              <img src="https://boxemag.ouest-france.fr/wp-content/uploads/2021/11/marseille-fight-club.jpg" alt="Logo Marseille Fight Club" className="h-15 w-auto cursor-pointer rounded-full" />
             </Link>
 
             {/* Navigation utilisateur */}
