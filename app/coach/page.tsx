@@ -37,6 +37,9 @@ export default function CoachPage() {
   const [newHoraire, setNewHoraire] = useState(EMPTY_HORAIRE);
   const [addingHoraire, setAddingHoraire] = useState(false);
   const [horaireError, setHoraireError] = useState("");
+  const [editingPresentationKey, setEditingPresentationKey] = useState<string | null>(null);
+  const [editedPresentation, setEditedPresentation] = useState("");
+  const [savingPresentation, setSavingPresentation] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -86,6 +89,31 @@ export default function CoachPage() {
   async function handleDeleteHoraire(id: number) {
     await fetch(`/api/horaires/${id}`, { method: "DELETE" });
     loadData();
+  }
+
+  function startEditPresentation(key: string, currentPresentation: string) {
+    setEditingPresentationKey(key);
+    setEditedPresentation(currentPresentation || "");
+  }
+
+  async function handleSavePresentation(key: string) {
+    setSavingPresentation(true);
+    try {
+      const res = await fetch(`/api/disciplines/${key}/edit`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ presentation: editedPresentation }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEditingPresentationKey(null);
+        loadData();
+      } else {
+        alert(data.error || "Erreur lors de la sauvegarde");
+      }
+    } finally {
+      setSavingPresentation(false);
+    }
   }
 
   if (!ready) return null;
@@ -142,9 +170,56 @@ export default function CoachPage() {
 
                   {isOpen && (
                     <div className="px-6 pb-6 space-y-4 border-t border-gray-800">
+                      {/* Description/Présentation */}
+                      <div className="pt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-medium text-gray-300">Description</h3>
+                          {editingPresentationKey !== d.key && (
+                            <button
+                              onClick={() => startEditPresentation(d.key, d.presentation)}
+                              className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+                            >
+                              Modifier
+                            </button>
+                          )}
+                        </div>
+                        {editingPresentationKey === d.key ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editedPresentation}
+                              onChange={(e) => setEditedPresentation(e.target.value)}
+                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 min-h-[100px]"
+                              placeholder="Décrivez la discipline..."
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleSavePresentation(d.key)}
+                                disabled={savingPresentation}
+                                className="text-xs bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 text-white px-3 py-1 rounded transition"
+                              >
+                                {savingPresentation ? "Enregistrement..." : "Enregistrer"}
+                              </button>
+                              <button
+                                onClick={() => setEditingPresentationKey(null)}
+                                disabled={savingPresentation}
+                                className="text-xs text-gray-400 hover:text-gray-300 transition"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400">
+                            {d.presentation || <span className="italic">Aucune description</span>}
+                          </p>
+                        )}
+                      </div>
+
                       {/* Horaires table */}
+                      <div className="border-t border-gray-800 pt-4">
+                        <h3 className="text-sm font-medium text-gray-300 mb-3">Créneaux horaires</h3>
                       {sorted.length === 0 ? (
-                        <p className="text-sm text-gray-500 pt-4">Aucun créneau. Ajoutez-en un ci-dessous.</p>
+                        <p className="text-sm text-gray-500">Aucun créneau. Ajoutez-en un ci-dessous.</p>
                       ) : (
                         <table className="w-full text-sm mt-4">
                           <thead>
@@ -225,6 +300,7 @@ export default function CoachPage() {
                           </button>
                         </div>
                         {horaireError && <p className="text-red-400 text-xs mt-1">{horaireError}</p>}
+                      </div>
                       </div>
                     </div>
                   )}

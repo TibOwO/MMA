@@ -3,11 +3,20 @@
 import React, { useEffect, useState } from "react";
 import SportCard from "../components/SportCard";
 
+interface Horaire {
+  id: number;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
+  description: string;
+}
+
 interface Discipline {
   key: string;
   name: string;
   presentation: string;
   image_url: string;
+  horaires: Horaire[];
 }
 
 export default function HomePage() {
@@ -42,6 +51,7 @@ export default function HomePage() {
               description={sport.presentation}
               imageUrl={sport.image_url}
               link={`/discipline/${sport.key}`}
+              horaires={sport.horaires}
             />
           ))}
         </div>
