@@ -52,7 +52,7 @@ const PAGES = [
   },
   {
     href: "/admin/zk",
-    title: "Gestion ZK",
+    title: "Gestion ZKKKKKK",
     description: "Configurer les pools de codes et la date de fin de saison par discipline.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
