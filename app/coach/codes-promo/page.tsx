@@ -51,7 +51,7 @@ export default function CodesPromoPage() {
     const fetchData = async () => {
       try {
         // Charger les codes promo
-        const codesRes = await fetch("http://localhost:8000/api/coach/codes-promo", {
+        const codesRes = await fetch("/api/coach/codes-promo", {
           credentials: "include",
         });
         if (codesRes.ok) {
@@ -63,7 +63,7 @@ export default function CodesPromoPage() {
         }
 
         // Charger les disciplines du coach
-        const disciplinesRes = await fetch("http://localhost:8000/api/coach/mes-disciplines", {
+        const disciplinesRes = await fetch("/api/coach/mes-disciplines", {
           credentials: "include",
         });
         if (disciplinesRes.ok) {
@@ -94,7 +94,7 @@ export default function CodesPromoPage() {
 
       if (editingCode) {
         // Modifier
-        const res = await fetch(`http://localhost:8000/api/coach/codes-promo/${editingCode.id}`, {
+        const res = await fetch(`/api/coach/codes-promo/${editingCode.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -114,7 +114,7 @@ export default function CodesPromoPage() {
         }
       } else {
         // Créer
-        const res = await fetch("http://localhost:8000/api/coach/codes-promo/create", {
+        const res = await fetch("/api/coach/codes-promo/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -160,7 +160,7 @@ export default function CodesPromoPage() {
 
   const handleDelete = async (codeId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/coach/codes-promo/${codeId}/delete`, {
+      const res = await fetch(`/api/coach/codes-promo/${codeId}/delete`, {
         method: "DELETE",
         credentials: "include",
       });

@@ -44,7 +44,7 @@ export default function AdminCodesPromoPage() {
   useEffect(() => {
     const fetchCodesPromo = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/admin/codes-promo", {
+        const res = await fetch("/api/admin/codes-promo", {
           credentials: "include",
         });
         
@@ -87,7 +87,7 @@ export default function AdminCodesPromoPage() {
     setSaveOk(false);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/coach/codes-promo/${editingCode.id}`, {
+      const res = await fetch(`/api/coach/codes-promo/${editingCode.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -120,7 +120,7 @@ export default function AdminCodesPromoPage() {
 
   const handleDelete = async (codeId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/coach/codes-promo/${codeId}/delete`, {
+      const res = await fetch(`/api/coach/codes-promo/${codeId}/delete`, {
         method: "DELETE",
         credentials: "include",
       });
