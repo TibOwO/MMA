@@ -45,6 +45,7 @@ export default function AdminUsersPage() {
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
 
   // Edit panel
   const [editId, setEditId] = useState<number | null>(null);
@@ -116,11 +117,20 @@ export default function AdminUsersPage() {
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
-    return (
+    const matchesSearch = (
       u.nom.toLowerCase().includes(q) ||
       u.prenom.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q)
     );
+    
+    // Filtre par discipline
+    let matchesDiscipline = true;
+    if (filterDiscipline !== "all") {
+      // Vérifier si l'utilisateur a au moins une adhésion dans cette discipline
+      matchesDiscipline = u.adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
+    }
+    
+    return matchesSearch && matchesDiscipline;
   });
 
   if (!ready) return null;
@@ -255,19 +265,46 @@ export default function AdminUsersPage() {
 
         {/* Filters + list */}
         <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-800 flex items-center gap-4">
-            <h2 className="font-semibold text-white shrink-0">
-              Membres <span className="text-indigo-400 font-bold">{users.length}</span>
-            </h2>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher…"
-              className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-500 rounded-lg px-3 py-1.5 transition"
-            />
-            <button onClick={loadData} className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition shrink-0">
-              Actualiser
-            </button>
+          <div className="px-6 py-4 border-b border-gray-800 space-y-3">
+            <div className="flex items-center gap-4">
+              <h2 className="font-semibold text-white shrink-0">
+                Membres <span className="text-indigo-400 font-bold">{filtered.length}</span>
+                {filterDiscipline !== "all" && <span className="text-gray-500">/{users.length}</span>}
+              </h2>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher…"
+                className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-500 rounded-lg px-3 py-1.5 transition"
+              />
+              <button onClick={loadData} className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition shrink-0">
+                Actualiser
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 shrink-0">Filtrer par discipline :</label>
+              <select
+                value={filterDiscipline}
+                onChange={(e) => setFilterDiscipline(e.target.value)}
+                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <option value="all">Toutes les disciplines</option>
+                {disciplines.map((d) => (
+                  <option key={d.key} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+              {filterDiscipline !== "all" && (
+                <button
+                  onClick={() => setFilterDiscipline("all")}
+                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
+                  title="Réinitialiser le filtre"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -289,7 +326,12 @@ export default function AdminUsersPage() {
                     </div>
                     <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     {u.role === "coach" && u.disciplines.length > 0 && (
-                      <p className="text-xs text-teal-400 mt-0.5">{u.disciplines.join(", ")}</p>
+                      <p className="text-xs text-teal-400 mt-0.5">Enseigne : {u.disciplines.join(", ")}</p>
+                    )}
+                    {u.adhesions.length > 0 && (
+                      <p className="text-xs text-indigo-400 mt-0.5">
+                        Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
+                      </p>
                     )}
                   </div>
                   <span className="text-xs text-gray-500 shrink-0">Modifier →</span>
