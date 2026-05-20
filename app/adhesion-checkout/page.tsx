@@ -27,6 +27,13 @@ function AdhesionCheckoutContent() {
   // Modal de choix du mode de paiement
   const [selectedDiscipline, setSelectedDiscipline] = useState<Discipline | null>(null);
   const [showPaymentChoice, setShowPaymentChoice] = useState(false);
+  
+  // Code promo
+  const [showCodePromo, setShowCodePromo] = useState(false);
+  const [codePromo, setCodePromo] = useState('');
+  const [codePromoData, setCodePromoData] = useState<any>(null);
+  const [codePromoError, setCodePromoError] = useState('');
+  const [validatingCode, setValidatingCode] = useState(false);
 
   useEffect(() => {
     // Vérifier que l'utilisateur est connecté
@@ -90,6 +97,12 @@ function AdhesionCheckoutContent() {
   const handleDisciplineClick = (discipline: Discipline) => {
     const amount = extractAmount(discipline.tarif);
     
+    // Réinitialiser le code promo
+    setShowCodePromo(false);
+    setCodePromo('');
+    setCodePromoData(null);
+    setCodePromoError('');
+    
     // Si montant < 90€, paiement comptant direct (pas assez pour 3 fois)
     if (amount < 90) {
       handleInitializeCheckout(discipline.key, false);
@@ -100,19 +113,72 @@ function AdhesionCheckoutContent() {
     }
   };
 
+  // Valider le code promo
+  const handleValidateCodePromo = async () => {
+    if (!codePromo.trim() || !selectedDiscipline) return;
+
+    setValidatingCode(true);
+    setCodePromoError('');
+
+    try {
+      const res = await fetch('/api/codes-promo/valider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: codePromo.toUpperCase(),
+          discipline_key: selectedDiscipline.key,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        setCodePromoError(data.error || 'Code promo invalide');
+        setCodePromoData(null);
+      } else {
+        setCodePromoData(data.code_promo);
+        setCodePromoError('');
+      }
+    } catch (err) {
+      setCodePromoError('Erreur lors de la validation du code');
+      setCodePromoData(null);
+    } finally {
+      setValidatingCode(false);
+    }
+  };
+
+  // Calculer le prix final après réduction
+  const calculateFinalPrice = (tarif: string): number => {
+    const basePrice = extractAmount(tarif);
+    if (!codePromoData) return basePrice;
+
+    if (codePromoData.type_reduction === 'pourcentage') {
+      return Math.max(0, basePrice - (basePrice * codePromoData.valeur / 100));
+    } else {
+      return Math.max(0, basePrice - codePromoData.valeur);
+    }
+  };
+
   const handleInitializeCheckout = async (disciplineKey: string, enableInstallments: boolean) => {
     setProcessingKey(disciplineKey);
     setErrorMessage('');
     setShowPaymentChoice(false);
 
     try {
+      const payload: any = {
+        discipline_key: disciplineKey,
+        enable_installments: enableInstallments,
+      };
+
+      // Ajouter le code promo s'il est valide
+      if (codePromoData) {
+        payload.code_promo = codePromoData.code;
+      }
+
       const res = await fetch('/api/adhesion/initialize-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          discipline_key: disciplineKey,
-          enable_installments: enableInstallments 
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -216,11 +282,106 @@ function AdhesionCheckoutContent() {
       {/* Modal de choix du mode de paiement */}
       {showPaymentChoice && selectedDiscipline && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-2">{selectedDiscipline.name}</h2>
-            <p className="text-gray-600 mb-6">
-              Tarif : <span className="font-semibold text-blue-600">{selectedDiscipline.tarif}</span>
+            <p className="text-gray-600 mb-4">
+              Tarif : <span className={`font-semibold ${codePromoData ? 'line-through text-gray-400' : 'text-blue-600'}`}>
+                {selectedDiscipline.tarif}
+              </span>
+              {codePromoData && (
+                <span className="ml-2 font-bold text-green-600">
+                  {calculateFinalPrice(selectedDiscipline.tarif).toFixed(2)}€
+                </span>
+              )}
             </p>
+
+            {/* Section code promo */}
+            <div className="mb-6">
+              {!showCodePromo ? (
+                <button
+                  onClick={() => setShowCodePromo(true)}
+                  className="w-full p-3 border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg text-sm text-gray-600 hover:text-blue-600 font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  J'ai un code promo
+                </button>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Code promo (optionnel)
+                    </label>
+                    <button
+                      onClick={() => {
+                        setShowCodePromo(false);
+                        setCodePromo('');
+                        setCodePromoData(null);
+                        setCodePromoError('');
+                      }}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Masquer
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={codePromo}
+                      onChange={(e) => {
+                        setCodePromo(e.target.value.toUpperCase());
+                        setCodePromoError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleValidateCodePromo();
+                        }
+                      }}
+                      placeholder="BIENVENUE2025"
+                      disabled={validatingCode || !!codePromoData}
+                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm uppercase disabled:bg-gray-100 text-gray-900 placeholder-gray-400 bg-white"
+                    />
+                    {!codePromoData ? (
+                      <button
+                        onClick={handleValidateCodePromo}
+                        disabled={!codePromo.trim() || validatingCode}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                      >
+                        {validatingCode ? '...' : 'Valider'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setCodePromo('');
+                          setCodePromoData(null);
+                          setCodePromoError('');
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm font-medium"
+                      >
+                        Retirer
+                      </button>
+                    )}
+                  </div>
+                  
+                  {codePromoError && (
+                    <p className="mt-2 text-xs text-red-600">⚠️ {codePromoError}</p>
+                  )}
+                  
+                  {codePromoData && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                      <p className="text-sm font-semibold text-green-800 mb-1">
+                        ✓ Code promo appliqué !
+                      </p>
+                      <p className="text-xs text-green-700">
+                        {codePromoData.description || `Réduction de ${codePromoData.type_reduction === 'pourcentage' ? codePromoData.valeur + '%' : codePromoData.valeur + '€'}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <h3 className="text-lg font-semibold mb-4">Choisissez votre mode de paiement</h3>
 
@@ -236,7 +397,9 @@ function AdhesionCheckoutContent() {
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">Paiement comptant</div>
                     <div className="text-sm text-gray-600">
-                      Paiement en une seule fois : {selectedDiscipline.tarif}
+                      Paiement en une seule fois : {codePromoData 
+                        ? `${calculateFinalPrice(selectedDiscipline.tarif).toFixed(2)}€`
+                        : selectedDiscipline.tarif}
                     </div>
                   </div>
                 </div>
@@ -253,7 +416,7 @@ function AdhesionCheckoutContent() {
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">Paiement en 3 fois</div>
                     <div className="text-sm text-gray-600">
-                      3 mensualités de {Math.ceil(extractAmount(selectedDiscipline.tarif) / 3)}€
+                      3 mensualités de {Math.ceil(calculateFinalPrice(selectedDiscipline.tarif) / 3)}€
                     </div>
                     <div className="text-xs text-green-600 mt-1">
                       ✓ Sans frais supplémentaires
@@ -268,6 +431,9 @@ function AdhesionCheckoutContent() {
               onClick={() => {
                 setShowPaymentChoice(false);
                 setSelectedDiscipline(null);
+                setCodePromo('');
+                setCodePromoData(null);
+                setCodePromoError('');
               }}
               disabled={!!processingKey}
               className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 disabled:opacity-50"

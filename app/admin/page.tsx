@@ -17,6 +17,17 @@ const PAGES = [
     color: "indigo",
   },
   {
+    href: "/admin/codes-promo",
+    title: "Codes promo",
+    description: "Gérer tous les codes promotionnels créés par les coachs et contrôler leur utilisation.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+      </svg>
+    ),
+    color: "emerald",
+  },
+  {
     href: "/admin/helloasso-config",
     title: "Configuration HelloAsso",
     description: "Gérer les associations HelloAsso et les assigner aux disciplines pour les paiements.",
