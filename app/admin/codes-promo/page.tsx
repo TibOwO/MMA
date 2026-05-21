@@ -29,11 +29,19 @@ interface Coach {
   email: string;
 }
 
+interface CurrentUser {
+  id: number;
+  prenom: string;
+  nom: string;
+  role: string;
+}
+
 export default function AdminCodesPromoPage() {
   const router = useRouter();
   const [codesPromo, setCodesPromo] = useState<CodePromo[]>([]);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [coachs, setCoachs] = useState<Coach[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingCode, setEditingCode] = useState<CodePromo | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -70,6 +78,15 @@ export default function AdminCodesPromoPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Charger l'utilisateur actuel
+        const resCurrentUser = await fetch("/api/current-user", {
+          credentials: "include",
+        });
+        if (resCurrentUser.ok) {
+          const userData = await resCurrentUser.json();
+          setCurrentUser(userData.user);
+        }
+
         // Charger les codes promo
         const resCodesPromo = await fetch("/api/admin/codes-promo", {
           credentials: "include",
@@ -156,12 +173,12 @@ export default function AdminCodesPromoPage() {
       return;
     }
     if (!createFormData.coach_id) {
-      setSaveError("Vous devez sélectionner un coach");
+      setSaveError("Vous devez sélectionner un propriétaire");
       return;
     }
 
     try {
-      const res = await fetch("/api/coach/codes-promo", {
+      const res = await fetch("/api/coach/codes-promo/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -488,7 +505,7 @@ export default function AdminCodesPromoPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Coach <span className="text-red-400">*</span>
+                      Propriétaire <span className="text-red-400">*</span>
                     </label>
                     <select
                       value={createFormData.coach_id || ""}
@@ -501,7 +518,12 @@ export default function AdminCodesPromoPage() {
                       className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
                       required
                     >
-                      <option value="">-- Sélectionner un coach --</option>
+                      <option value="">-- Sélectionner --</option>
+                      {currentUser && (
+                        <option value={currentUser.id} className="font-semibold">
+                          🔹 Moi-même (Admin)
+                        </option>
+                      )}
                       {coachs.map((coach) => (
                         <option key={coach.id} value={coach.id}>
                           {coach.prenom} {coach.nom}
@@ -666,7 +688,7 @@ export default function AdminCodesPromoPage() {
         )}
         
         {/* Message d'erreur global */}
-        {saveError && !showEditForm && (
+        {saveError && !showEditForm && !showCreateForm && (
           <div className="mt-4 bg-red-900/40 border border-red-700 text-red-400 px-4 py-3 rounded">
             {saveError}
           </div>
