@@ -17,12 +17,27 @@ interface CodePromo {
   coach_nom: string;
 }
 
+interface Discipline {
+  key: string;
+  name: string;
+}
+
+interface Coach {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+}
+
 export default function AdminCodesPromoPage() {
   const router = useRouter();
   const [codesPromo, setCodesPromo] = useState<CodePromo[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+  const [coachs, setCoachs] = useState<Coach[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCode, setEditingCode] = useState<CodePromo | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   
   // Messages
   const [saveError, setSaveError] = useState("");
@@ -37,27 +52,57 @@ export default function AdminCodesPromoPage() {
     utilisations_max: null as number | null,
   });
 
-  // Filtres
+  // Formulaire de création
+  const [createFormData, setCreateFormData] = useState({
+    code: "",
+    description: "",
+    type_reduction: "pourcentage" as "pourcentage" | "montant",
+    valeur: 0,
+    actif: true,
+    utilisations_max: null as number | null,
+    discipline_key: null as string | null,
+    coach_id: null as number | null,
+  });
+
+  // Filtre actif/inactif
   const [filterActif, setFilterActif] = useState<"all" | "actif" | "inactif">("all");
-  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const fetchCodesPromo = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/admin/codes-promo", {
+        // Charger les codes promo
+        const resCodesPromo = await fetch("/api/admin/codes-promo", {
           credentials: "include",
         });
         
-        if (res.ok) {
-          const data = await res.json();
+        if (resCodesPromo.ok) {
+          const data = await resCodesPromo.json();
           setCodesPromo(data.codes_promo || []);
-        } else if (res.status === 401) {
+        } else if (resCodesPromo.status === 401) {
           router.push("/login");
           return;
-        } else if (res.status === 403) {
+        } else if (resCodesPromo.status === 403) {
           setSaveError("Accès réservé aux administrateurs");
           router.push("/");
           return;
+        }
+
+        // Charger les disciplines
+        const resDisciplines = await fetch("/api/disciplines", {
+          credentials: "include",
+        });
+        if (resDisciplines.ok) {
+          const data = await resDisciplines.json();
+          setDisciplines(data.disciplines || []);
+        }
+
+        // Charger les coachs
+        const resCoachs = await fetch("/api/admin/users?role=coach", {
+          credentials: "include",
+        });
+        if (resCoachs.ok) {
+          const data = await resCoachs.json();
+          setCoachs(data.users || []);
         }
       } catch (error) {
         console.error("Erreur lors du chargement:", error);
@@ -66,7 +111,7 @@ export default function AdminCodesPromoPage() {
       }
     };
 
-    fetchCodesPromo();
+    fetchData();
   }, [router]);
 
   const handleEdit = (code: CodePromo) => {
@@ -78,6 +123,74 @@ export default function AdminCodesPromoPage() {
     setSaveError("");
     setSaveOk(false);
     setShowEditForm(true);
+  };
+
+  const handleCreateNew = () => {
+    setCreateFormData({
+      code: "",
+      description: "",
+      type_reduction: "pourcentage",
+      valeur: 0,
+      actif: true,
+      utilisations_max: null,
+      discipline_key: null,
+      coach_id: null,
+    });
+    setSaveError("");
+    setSaveOk(false);
+    setShowCreateForm(true);
+  };
+
+  const handleSubmitCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaveError("");
+    setSaveOk(false);
+
+    // Validation
+    if (!createFormData.code.trim()) {
+      setSaveError("Le code est obligatoire");
+      return;
+    }
+    if (createFormData.valeur <= 0) {
+      setSaveError("La valeur doit être supérieure à 0");
+      return;
+    }
+    if (!createFormData.coach_id) {
+      setSaveError("Vous devez sélectionner un coach");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/coach/codes-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          code: createFormData.code.trim().toUpperCase(),
+          description: createFormData.description.trim(),
+          type_reduction: createFormData.type_reduction,
+          valeur: createFormData.valeur,
+          actif: createFormData.actif,
+          utilisations_max: createFormData.utilisations_max || null,
+          discipline_key: createFormData.discipline_key || null,
+          coach_id: createFormData.coach_id,
+        }),
+      });
+
+      if (res.ok) {
+        setSaveOk(true);
+        setTimeout(() => {
+          setShowCreateForm(false);
+          window.location.reload();
+        }, 1000);
+      } else {
+        const data = await res.json();
+        setSaveError(data.error || "Erreur lors de la création");
+      }
+    } catch (error) {
+      console.error("Erreur:", error);
+      setSaveError("Erreur lors de l'enregistrement");
+    }
   };
 
   const handleSubmitEdit = async (e: React.FormEvent) => {
@@ -145,17 +258,6 @@ export default function AdminCodesPromoPage() {
     if (filterActif === "actif" && !code.actif) return false;
     if (filterActif === "inactif" && code.actif) return false;
 
-    // Recherche textuelle
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      return (
-        code.code.toLowerCase().includes(term) ||
-        code.description.toLowerCase().includes(term) ||
-        code.coach_nom.toLowerCase().includes(term) ||
-        code.discipline_name.toLowerCase().includes(term)
-      );
-    }
-
     return true;
   });
 
@@ -170,33 +272,32 @@ export default function AdminCodesPromoPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-white mb-6">Gestion des codes promo</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-extrabold text-white">Gestion des codes promo</h1>
+          <button
+            onClick={handleCreateNew}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Créer un code promo
+          </button>
+        </div>
 
-        {/* Filtres */}
+        {/* Filtre Statut */}
         <div className="bg-gray-900 p-4 rounded-2xl shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Rechercher</label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Code, coach, discipline..."
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Statut</label>
-              <select
-                value={filterActif}
-                onChange={(e) => setFilterActif(e.target.value as any)}
-                className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
-              >
-                <option value="all">Tous</option>
-                <option value="actif">Actifs uniquement</option>
-                <option value="inactif">Inactifs uniquement</option>
-              </select>
-            </div>
+          <div className="max-w-xs">
+            <label className="block text-sm font-medium text-gray-300 mb-1">Statut</label>
+            <select
+              value={filterActif}
+              onChange={(e) => setFilterActif(e.target.value as any)}
+              className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+            >
+              <option value="all">Tous</option>
+              <option value="actif">Actifs uniquement</option>
+              <option value="inactif">Inactifs uniquement</option>
+            </select>
           </div>
         </div>
 
@@ -291,7 +392,7 @@ export default function AdminCodesPromoPage() {
         {/* Modal d'édition */}
         {showEditForm && editingCode && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
               <h2 className="text-2xl font-bold text-white mb-4">Modifier le code promo</h2>
               <p className="text-gray-400 mb-4">
                 Code : <span className="font-mono font-bold text-indigo-400">{editingCode.code}</span>
@@ -349,6 +450,212 @@ export default function AdminCodesPromoPage() {
                       setSaveOk(false);
                     }}
                     className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de création */}
+        {showCreateForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full p-6 my-8">
+              <h2 className="text-2xl font-bold text-white mb-6">Créer un code promo</h2>
+
+              <form onSubmit={handleSubmitCreate} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Code promo <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={createFormData.code}
+                      onChange={(e) =>
+                        setCreateFormData({
+                          ...createFormData,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
+                      className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2 font-mono"
+                      placeholder="BIENVENUE2026"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Coach <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      value={createFormData.coach_id || ""}
+                      onChange={(e) =>
+                        setCreateFormData({
+                          ...createFormData,
+                          coach_id: e.target.value ? parseInt(e.target.value) : null,
+                        })
+                      }
+                      className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+                      required
+                    >
+                      <option value="">-- Sélectionner un coach --</option>
+                      {coachs.map((coach) => (
+                        <option key={coach.id} value={coach.id}>
+                          {coach.prenom} {coach.nom}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <input
+                    type="text"
+                    value={createFormData.description}
+                    onChange={(e) =>
+                      setCreateFormData({
+                        ...createFormData,
+                        description: e.target.value,
+                      })
+                    }
+                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+                    placeholder="Code de bienvenue pour nouveaux adhérents"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Type de réduction <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      value={createFormData.type_reduction}
+                      onChange={(e) =>
+                        setCreateFormData({
+                          ...createFormData,
+                          type_reduction: e.target.value as "pourcentage" | "montant",
+                        })
+                      }
+                      className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+                    >
+                      <option value="pourcentage">Pourcentage (%)</option>
+                      <option value="montant">Montant fixe (€)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Valeur <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={createFormData.valeur}
+                        onChange={(e) =>
+                          setCreateFormData({
+                            ...createFormData,
+                            valeur: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        min="0.01"
+                        step="0.01"
+                        className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2 pr-8"
+                        required
+                      />
+                      <span className="absolute right-3 top-2 text-gray-400">
+                        {createFormData.type_reduction === "pourcentage" ? "%" : "€"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Discipline (optionnel)
+                  </label>
+                  <select
+                    value={createFormData.discipline_key || ""}
+                    onChange={(e) =>
+                      setCreateFormData({
+                        ...createFormData,
+                        discipline_key: e.target.value || null,
+                      })
+                    }
+                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+                  >
+                    <option value="">Toutes les disciplines</option>
+                    {disciplines.map((discipline) => (
+                      <option key={discipline.key} value={discipline.key}>
+                        {discipline.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Si vide, le code sera valable pour toutes les disciplines
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Nombre maximum d'utilisations
+                  </label>
+                  <input
+                    type="number"
+                    value={createFormData.utilisations_max || ""}
+                    onChange={(e) =>
+                      setCreateFormData({
+                        ...createFormData,
+                        utilisations_max: e.target.value ? parseInt(e.target.value) : null,
+                      })
+                    }
+                    min="1"
+                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
+                    placeholder="Illimité"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Laissez vide pour un nombre illimité
+                  </p>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="actif-create"
+                    checked={createFormData.actif}
+                    onChange={(e) =>
+                      setCreateFormData({ ...createFormData, actif: e.target.checked })
+                    }
+                    className="mr-2"
+                  />
+                  <label htmlFor="actif-create" className="text-sm font-medium text-gray-300">
+                    Code actif
+                  </label>
+                </div>
+
+                {saveError && <p className="text-red-400 text-sm">{saveError}</p>}
+                {saveOk && <p className="text-emerald-400 text-sm">Code promo créé ✓</p>}
+
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold"
+                  >
+                    Créer le code promo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setSaveError("");
+                      setSaveOk(false);
+                    }}
+                    className="flex-1 bg-gray-700 text-gray-300 px-4 py-2 rounded hover:bg-gray-600 font-semibold"
                   >
                     Annuler
                   </button>
