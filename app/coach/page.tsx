@@ -28,6 +28,17 @@ const PANELS = [
     color: "sky",
   },
   {
+    href: "/coach/annonces",
+    title: "Annonces",
+    description: "Publier des annonces pour informer vos adhérents.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+      </svg>
+    ),
+    color: "amber",
+  },
+  {
     href: "/coach/codes-promo",
     title: "Codes promo",
     description: "Créer et gérer vos codes de réduction pour les adhésions.",
@@ -55,6 +66,7 @@ const PANELS = [
 const colorMap: Record<string, string> = {
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
+  amber: "bg-amber-900/40 text-amber-400 group-hover:bg-amber-800/60",
   emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
   violet: "bg-violet-900/40 text-violet-400 group-hover:bg-violet-800/60",
 };
