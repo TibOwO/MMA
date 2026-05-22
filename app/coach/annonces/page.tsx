@@ -8,8 +8,7 @@ interface Annonce {
   titre: string;
   contenu: string;
   destinataire: string;
-  discipline_key: string | null;
-  discipline_name: string | null;
+  disciplines: { key: string; name: string }[];
   date_creation: string;
   date_expiration: string;
 }
@@ -40,7 +39,7 @@ export default function AnnoncesPage() {
     titre: "",
     contenu: "",
     destinataire: "adherents" as string,
-    discipline_key: "",
+    discipline_keys: [] as string[],
     date_expiration: "",
   });
 
@@ -92,7 +91,6 @@ export default function AnnoncesPage() {
     try {
       const payload = {
         ...formData,
-        discipline_key: formData.discipline_key || null,
       };
 
       if (editingAnnonce) {
@@ -147,7 +145,7 @@ export default function AnnoncesPage() {
       titre: annonce.titre,
       contenu: annonce.contenu,
       destinataire: annonce.destinataire,
-      discipline_key: annonce.discipline_key || "",
+      discipline_keys: annonce.disciplines.map((d) => d.key),
       date_expiration: annonce.date_expiration.slice(0, 16), // Format datetime-local
     });
     setSaveError("");
@@ -190,7 +188,7 @@ export default function AnnoncesPage() {
       titre: "",
       contenu: "",
       destinataire: userRole === "coach" ? "adherents" : "tous",
-      discipline_key: "",
+      discipline_keys: [],
       date_expiration: defaultExpirationStr,
     });
     setEditingAnnonce(null);
@@ -283,21 +281,31 @@ export default function AnnoncesPage() {
               {(userRole === "coach" || (userRole === "admin" && formData.destinataire === "adherents")) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Discipline {userRole === "coach" && <span className="text-red-500">*</span>}
+                    Disciplines {userRole === "coach" && <span className="text-red-500">*</span>}
                   </label>
-                  <select
-                    value={formData.discipline_key}
-                    onChange={(e) => setFormData({ ...formData, discipline_key: e.target.value })}
-                    required={userRole === "coach"}
-                    className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
-                  >
-                    <option value="">-- Sélectionner --</option>
+                  <p className="text-xs text-gray-500 mb-2">Sélectionnez une ou plusieurs disciplines</p>
+                  <div className="bg-gray-800 border border-gray-700 rounded p-3 max-h-48 overflow-y-auto space-y-2">
                     {disciplines.map((d) => (
-                      <option key={d.key} value={d.key}>
-                        {d.name}
-                      </option>
+                      <label key={d.key} className="flex items-center gap-2 cursor-pointer hover:bg-gray-700/50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={formData.discipline_keys.includes(d.key)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({ ...formData, discipline_keys: [...formData.discipline_keys, d.key] });
+                            } else {
+                              setFormData({ ...formData, discipline_keys: formData.discipline_keys.filter((k) => k !== d.key) });
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-gray-100">{d.name}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                  {userRole === "coach" && formData.discipline_keys.length === 0 && (
+                    <p className="text-red-400 text-xs mt-1">Veuillez sélectionner au moins une discipline</p>
+                  )}
                 </div>
               )}
 
@@ -364,9 +372,11 @@ export default function AnnoncesPage() {
                     </div>
                   </div>
                   <p className="text-gray-300 text-sm mb-2 whitespace-pre-wrap">{annonce.contenu}</p>
-                  <div className="flex gap-4 text-xs text-gray-500">
+                  <div className="flex gap-4 text-xs text-gray-500 flex-wrap">
                     <span>📅 Expire le {new Date(annonce.date_expiration).toLocaleString("fr-FR")}</span>
-                    {annonce.discipline_name && <span>📚 {annonce.discipline_name}</span>}
+                    {annonce.disciplines.length > 0 && (
+                      <span>📚 {annonce.disciplines.map((d) => d.name).join(", ")}</span>
+                    )}
                     <span className="text-indigo-400">
                       {annonce.destinataire === "tous" && "👥 Tous"}
                       {annonce.destinataire === "coachs" && "🎓 Coachs"}

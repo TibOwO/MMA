@@ -26,8 +26,7 @@ interface Annonce {
   titre: string;
   contenu: string;
   destinataire: string;
-  discipline_key: string | null;
-  discipline_name: string | null;
+  disciplines: { key: string; name: string }[];
   auteur_nom: string;
   date_creation: string;
   date_expiration: string;
@@ -95,25 +94,33 @@ export default function ProfilPage() {
           <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-lg font-semibold text-indigo-200">📢 Annonces</h2>
-              {Array.from(new Set(annonces.filter((a) => a.discipline_name).map((a) => a.discipline_name!))).length > 0 && (
-                <select
-                  value={filterDiscipline}
-                  onChange={(e) => setFilterDiscipline(e.target.value)}
-                  className="bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-1.5 text-sm"
-                >
-                  <option value="all">Toutes</option>
-                  {Array.from(new Set(annonces.filter((a) => a.discipline_name).map((a) => a.discipline_name!))).map((discipline) => (
-                    <option key={discipline} value={discipline}>
-                      {discipline}
-                    </option>
-                  ))}
-                </select>
-              )}
+              {(() => {
+                const allDisciplineNames = Array.from(
+                  new Set(annonces.flatMap((a) => a.disciplines.map((d) => d.name)))
+                );
+                return allDisciplineNames.length > 0 ? (
+                  <select
+                    value={filterDiscipline}
+                    onChange={(e) => setFilterDiscipline(e.target.value)}
+                    className="bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-1.5 text-sm"
+                  >
+                    <option value="all">Toutes</option>
+                    {allDisciplineNames.map((discipline) => (
+                      <option key={discipline} value={discipline}>
+                        {discipline}
+                      </option>
+                    ))}
+                  </select>
+                ) : null;
+              })()}
             </div>
 
             <div className="space-y-4">
               {annonces
-                .filter((a) => filterDiscipline === "all" || a.discipline_name === filterDiscipline)
+                .filter((a) => {
+                  if (filterDiscipline === "all") return true;
+                  return a.disciplines.some((d) => d.name === filterDiscipline);
+                })
                 .map((annonce) => (
                   <div
                     key={annonce.id}
@@ -139,9 +146,11 @@ export default function ProfilPage() {
                     <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap">{annonce.contenu}</p>
 
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 flex-wrap">
                         <span>✍️ {annonce.auteur_nom}</span>
-                        {annonce.discipline_name && <span>📚 {annonce.discipline_name}</span>}
+                        {annonce.disciplines.length > 0 && (
+                          <span>📚 {annonce.disciplines.map((d) => d.name).join(", ")}</span>
+                        )}
                       </div>
                       <span>📅 {new Date(annonce.date_creation).toLocaleDateString("fr-FR")}</span>
                     </div>
