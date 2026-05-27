@@ -19,6 +19,7 @@ interface Adhesion {
   discipline: string | null;
   discipline_key: string | null;
   code_zk: number | null;
+  afficher_qr: boolean;
 }
 
 interface Annonce {
@@ -233,7 +234,7 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
       </h3>
       <InfoRow label="Saison" value={adhesion.saison} />
       <InfoRow label="Statut" value={adhesion.statut} />
-      {adhesion.code_zk !== null ? (
+      {adhesion.code_zk !== null && adhesion.afficher_qr ? (
         <>
           <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
           <div className="flex flex-col items-center gap-3 pt-2">
@@ -246,6 +247,12 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
             </p>
           </div>
         </>
+      ) : adhesion.code_zk !== null && !adhesion.afficher_qr ? (
+        <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-4 mt-2">
+          <p className="text-sm text-red-300 text-center">
+            🔒 Votre QR code a été temporairement désactivé. Contactez votre coach pour plus d&apos;informations.
+          </p>
+        </div>
       ) : (
         <div className="bg-amber-900/20 border border-amber-800/50 rounded-xl p-4 mt-2">
           <div className="flex gap-3">

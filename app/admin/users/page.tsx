@@ -15,6 +15,7 @@ interface Adhesion {
   statut: string;
   date_expiration: string | null;
   ha_order_id: string;
+  afficher_qr: boolean;
 }
 
 interface Echeance {
@@ -295,6 +296,26 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function toggleAfficherQR(adhesionId: number) {
+    try {
+      const res = await fetch(`/api/adhesions/${adhesionId}/toggle-qr`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Recharger les données pour mettre à jour l'affichage
+        loadData();
+        if (editId) loadEcheances(editId);
+      } else {
+        alert(data.error || "Erreur lors de la modification");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur serveur");
+    }
+  }
+
   function toggleDiscipline(key: string) {
     setEditDisciplines((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
@@ -426,7 +447,7 @@ export default function AdminUsersPage() {
               {editUser.adhesions.length > 0 ? (
                 <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
                   {editUser.adhesions.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between text-xs">
+                    <div key={a.id} className="flex items-center justify-between text-xs gap-2">
                       <div className="flex-1">
                         <span className="text-white font-medium">{a.discipline || 'Sans discipline'}</span>
                         <span className="text-gray-500 ml-2">• {a.saison}</span>
@@ -451,6 +472,17 @@ export default function AdminUsersPage() {
                         >
                           {a.statut === 'payee' ? 'Payée' : a.statut === 'expiree' ? 'Expirée' : 'Remboursée'}
                         </span>
+                        <button
+                          onClick={() => toggleAfficherQR(a.id)}
+                          className={`px-2 py-0.5 rounded font-semibold transition text-[10px] ${
+                            a.afficher_qr 
+                              ? 'bg-green-700 hover:bg-green-600 text-green-100' 
+                              : 'bg-red-700 hover:bg-red-600 text-red-100'
+                          }`}
+                          title={a.afficher_qr ? "Désactiver le QR code" : "Activer le QR code"}
+                        >
+                          {a.afficher_qr ? '🔓 QR' : '🔒 QR'}
+                        </button>
                         {a.ha_order_id?.startsWith('MANUAL-') && (
                           <button
                             onClick={() => deleteAdhesionManuelle(a.id)}
