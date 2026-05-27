@@ -53,7 +53,8 @@ export default function CoachDisciplinesPage() {
 
   function loadData() {
     setLoading(true);
-    fetch("/api/coach/mes-disciplines")
+    const timestamp = Date.now();
+    fetch(`/api/coach/mes-disciplines?_t=${timestamp}`, { cache: 'no-cache' })
       .then((r) => r.json())
       .then((data) => setDisciplines(data.disciplines ?? []))
       .finally(() => setLoading(false));

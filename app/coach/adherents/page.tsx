@@ -88,9 +88,10 @@ export default function CoachAdherentsPage() {
 
   function loadData() {
     setLoading(true);
+    const timestamp = Date.now();
     Promise.all([
-      fetch("/api/coach/utilisateurs").then((r) => r.json()),
-      fetch("/api/coach/mes-disciplines").then((r) => r.json()),
+      fetch(`/api/coach/utilisateurs?_t=${timestamp}`, { cache: 'no-cache' }).then((r) => r.json()),
+      fetch(`/api/coach/mes-disciplines?_t=${timestamp}`, { cache: 'no-cache' }).then((r) => r.json()),
     ]).then(([ud, dd]) => {
       setUsers(ud.users ?? []);
       setDisciplines(dd.disciplines ?? []);

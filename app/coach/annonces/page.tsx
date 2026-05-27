@@ -66,7 +66,9 @@ export default function AnnoncesPage() {
         }
 
         // Charger les disciplines (pour les coachs)
-        const disciplinesRes = await fetch("/api/coach/mes-disciplines", {
+        const timestamp = Date.now();
+        const disciplinesRes = await fetch(`/api/coach/mes-disciplines?_t=${timestamp}`, {
+          cache: 'no-cache',
           credentials: "include",
         });
         if (disciplinesRes.ok) {
