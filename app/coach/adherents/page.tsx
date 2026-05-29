@@ -16,6 +16,7 @@ interface Adhesion {
   date_expiration: string | null;
   ha_order_id: string;
   afficher_qr: boolean;
+  qr_override_manuel: boolean;
   has_payment_issues: boolean;
   mode_paiement: string;
 }
@@ -413,6 +414,7 @@ export default function CoachAdherentsPage() {
                           title={a.afficher_qr ? "Désactiver le QR code" : "Activer le QR code"}
                         >
                           {a.afficher_qr ? '🔓 QR' : '🔒 QR'}
+                          {a.qr_override_manuel && <span className="ml-1 text-yellow-300" title="Override manuel actif (impayé)">!</span>}
                         </button>
                         {a.ha_order_id?.startsWith('MANUAL-') && (
                           <button
