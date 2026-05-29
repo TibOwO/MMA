@@ -16,6 +16,8 @@ interface Adhesion {
   date_expiration: string | null;
   ha_order_id: string;
   afficher_qr: boolean;
+  has_payment_issues: boolean;
+  mode_paiement: string;
 }
 
 interface Echeance {
@@ -58,6 +60,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
+  const [filterPayment, setFilterPayment] = useState<string>("all"); // all, paid, unpaid
 
   // Edit panel
   const [editId, setEditId] = useState<number | null>(null);
@@ -360,7 +363,15 @@ export default function AdminUsersPage() {
       matchesDiscipline = u.adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
     }
     
-    return matchesSearch && matchesDiscipline;
+    // Filtre par paiement
+    let matchesPayment = true;
+    if (filterPayment === "unpaid") {
+      matchesPayment = u.adhesions.some((adhesion) => adhesion.has_payment_issues);
+    } else if (filterPayment === "paid") {
+      matchesPayment = u.adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
+    }
+    
+    return matchesSearch && matchesDiscipline && matchesPayment;
   });
 
   if (!ready) return null;
@@ -584,7 +595,7 @@ export default function AdminUsersPage() {
             <div className="flex items-center gap-4">
               <h2 className="font-semibold text-white shrink-0">
                 Membres <span className="text-indigo-400 font-bold">{filtered.length}</span>
-                {filterDiscipline !== "all" && <span className="text-gray-500">/{users.length}</span>}
+                {(filterDiscipline !== "all" || filterPayment !== "all") && <span className="text-gray-500">/{users.length}</span>}
               </h2>
               <input
                 value={search}
@@ -613,6 +624,27 @@ export default function AdminUsersPage() {
               {filterDiscipline !== "all" && (
                 <button
                   onClick={() => setFilterDiscipline("all")}
+                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
+                  title="Réinitialiser le filtre"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 shrink-0">Filtrer par paiement :</label>
+              <select
+                value={filterPayment}
+                onChange={(e) => setFilterPayment(e.target.value)}
+                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <option value="all">Tous</option>
+                <option value="paid">Paiement OK</option>
+                <option value="unpaid">Impayés</option>
+              </select>
+              {filterPayment !== "all" && (
+                <button
+                  onClick={() => setFilterPayment("all")}
                   className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
                   title="Réinitialiser le filtre"
                 >
