@@ -766,10 +766,10 @@ export default function AdminUsersPage() {
                   <input
                     type="number"
                     step="0.01"
-                    value={createMontant}
+                    value={createMontant === 0 ? "" : createMontant}
                     onChange={(e) => setCreateMontant(parseFloat(e.target.value) || 0)}
                     className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-2 transition"
-                    placeholder="300"
+                    placeholder="Montant total de l'adhésion"
                   />
                 </div>
               )}
