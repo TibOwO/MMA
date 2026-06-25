@@ -76,6 +76,7 @@ export default function AdminUsersPage() {
   const [createDisciplineKey, setCreateDisciplineKey] = useState("");
   const [createMontant, setCreateMontant] = useState(0);
   const [createType, setCreateType] = useState<"gratuite" | "especes" | "plusieurs">("gratuite");
+  const [createModePaiement, setCreateModePaiement] = useState<"especes" | "cheque">("especes");
   const [createEcheances, setCreateEcheances] = useState<Echeance[]>([]);
   const [creatingAdhesion, setCreatingAdhesion] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -198,19 +199,6 @@ export default function AdminUsersPage() {
       return;
     }
 
-    // Validation
-    if (createType === "especes" || createType === "plusieurs") {
-      if (createMontant <= 0) {
-        setCreateError("Le montant doit être supérieur à 0");
-        return;
-      }
-      const somme = createEcheances.reduce((acc, e) => acc + parseFloat(String(e.montant || 0)), 0);
-      if (Math.abs(somme - createMontant) > 0.01) {
-        setCreateError(`La somme des échéances (${somme}€) ne correspond pas au montant total (${createMontant}€)`);
-        return;
-      }
-    }
-
     setCreatingAdhesion(true);
     setCreateError("");
     try {
@@ -220,6 +208,7 @@ export default function AdminUsersPage() {
         body: JSON.stringify({
           user_id: editId,
           discipline_key: createDisciplineKey,
+          mode_paiement: createType === "gratuite" ? undefined : createModePaiement,
           montant_total: createMontant,
           echeances: createType === "gratuite" ? [] : createEcheances.map(e => ({
             numero: e.numero,
@@ -251,7 +240,7 @@ export default function AdminUsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date_paiement: new Date().toISOString().split('T')[0],
-          remarque: `Espèces reçues le ${new Date().toLocaleDateString('fr-FR')}`,
+          remarque: `Paiement reçu le ${new Date().toLocaleDateString('fr-FR')}`,
         }),
       });
       const data = await res.json();
@@ -464,7 +453,14 @@ export default function AdminUsersPage() {
                         <span className="text-white font-medium">{a.discipline || 'Sans discipline'}</span>
                         <span className="text-gray-500 ml-2">• {a.saison}</span>
                         {a.ha_order_id?.startsWith('MANUAL-') && (
-                          <span className="ml-2 text-[10px] text-indigo-400">(manuelle)</span>
+                          <>
+                            <span className="ml-2 text-[10px] text-indigo-400">(manuelle)</span>
+                            <span className="ml-2 text-[10px] text-gray-400">
+                              {a.mode_paiement === 'especes' && '💵'}
+                              {a.mode_paiement === 'cheque' && '📝'}
+                              {a.mode_paiement === 'helloasso' && '💳'}
+                            </span>
+                          </>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
@@ -744,7 +740,7 @@ export default function AdminUsersPage() {
                         : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                     }`}
                   >
-                    Espèces (1x)
+                    Paiement (1x)
                   </button>
                   <button
                     onClick={() => handleTypeChange("plusieurs")}
@@ -754,10 +750,39 @@ export default function AdminUsersPage() {
                         : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                     }`}
                   >
-                    Espèces (plusieurs fois)
+                    Paiement (plusieurs fois)
                   </button>
                 </div>
               </div>
+
+              {/* Mode de paiement (espèces ou chèque) */}
+              {createType !== "gratuite" && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-gray-400">Mode de paiement</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCreateModePaiement("especes")}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                        createModePaiement === "especes"
+                          ? "bg-indigo-700 text-indigo-100"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                    >
+                      💵 Espèces
+                    </button>
+                    <button
+                      onClick={() => setCreateModePaiement("cheque")}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                        createModePaiement === "cheque"
+                          ? "bg-indigo-700 text-indigo-100"
+                          : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      }`}
+                    >
+                      📝 Chèque
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Montant total */}
               {createType !== "gratuite" && (

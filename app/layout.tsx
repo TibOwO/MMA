@@ -24,19 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body>
         <header className="fixed top-0 left-0 w-full text-white shadow-md z-50 rounded-b-xl">
-          <div className="container mx-auto flex justify-between items-center p-2 px-6">
-            {/* Espace gauche pour équilibrer */}
-            <div className="w-24" />
-
-            {/* Logo centré */}
-            <Link href="/" className="flex items-center">
-              <img src="https://boxemag.ouest-france.fr/wp-content/uploads/2021/11/marseille-fight-club.jpg" alt="Logo Marseille Fight Club" className="h-15 w-auto cursor-pointer rounded-full" />
-            </Link>
-
+          <div className="container mx-auto flex justify-end items-center p-2 px-6">
             {/* Navigation utilisateur */}
-            <div className="flex justify-end">
-              <HeaderNav />
-            </div>
+            <HeaderNav />
           </div>
         </header>
 
