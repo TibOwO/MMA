@@ -23,12 +23,24 @@ interface Adhesion {
 
 interface Echeance {
   id?: number;
+  adhesion_id?: number;
   numero: number;
   montant: number;
   date_echeance: string;
   date_paiement?: string | null;
   statut?: string;
   remarque: string;
+  discipline?: string;
+  saison?: string;
+  mode_paiement?: string;
+}
+
+interface AdhesionWithEcheances {
+  adhesion_id: number;
+  discipline: string;
+  saison: string;
+  mode_paiement: string;
+  echeances: Echeance[];
 }
 
 interface User {
@@ -62,6 +74,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
   const [filterPayment, setFilterPayment] = useState<string>("all"); // all, paid, unpaid
+  const [filterQRStatus, setFilterQRStatus] = useState<string>("all"); // all, active, inactive
 
   // Edit panel
   const [editId, setEditId] = useState<number | null>(null);
@@ -84,6 +97,8 @@ export default function AdminUsersPage() {
   // Gestion échéances
   const [echeances, setEcheances] = useState<any[]>([]);
   const [loadingEcheances, setLoadingEcheances] = useState(false);
+  const [filterSaison, setFilterSaison] = useState<string>("all"); // all, current
+  const [expandedAdhesions, setExpandedAdhesions] = useState<Set<number>>(new Set()); // IDs des adhésions dépliées
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -115,6 +130,9 @@ export default function AdminUsersPage() {
     setSaveError("");
     setSaveOk(false);
     loadEcheances(u.id); // Charger les échéances de l'utilisateur
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function loadEcheances(userId: number) {
@@ -123,8 +141,19 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/echeances?user_id=${userId}`);
       const data = await res.json();
       setEcheances(data.echeances ?? []);
+      
+      // Déplier automatiquement les adhésions de la saison actuelle
+      const currentSaison = getCurrentSaison();
+      const currentAdhesions = new Set<number>();
+      (data.echeances ?? []).forEach((e: Echeance) => {
+        if (e.adhesion_id && e.saison === currentSaison) {
+          currentAdhesions.add(e.adhesion_id);
+        }
+      });
+      setExpandedAdhesions(currentAdhesions);
     } catch {
       setEcheances([]);
+      setExpandedAdhesions(new Set());
     } finally {
       setLoadingEcheances(false);
     }
@@ -315,6 +344,74 @@ export default function AdminUsersPage() {
     );
   }
 
+  function toggleAdhesionExpand(adhesionId: number) {
+    setExpandedAdhesions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(adhesionId)) {
+        newSet.delete(adhesionId);
+      } else {
+        newSet.add(adhesionId);
+      }
+      return newSet;
+    });
+  }
+
+  // Grouper les échéances par adhésion
+  function groupEcheancesByAdhesion(): AdhesionWithEcheances[] {
+    const groups = new Map<number, AdhesionWithEcheances>();
+    
+    echeances.forEach((e: Echeance) => {
+      if (!e.adhesion_id) return;
+      
+      if (!groups.has(e.adhesion_id)) {
+        groups.set(e.adhesion_id, {
+          adhesion_id: e.adhesion_id,
+          discipline: e.discipline || '',
+          saison: e.saison || '',
+          mode_paiement: e.mode_paiement || '',
+          echeances: [],
+        });
+      }
+      
+      groups.get(e.adhesion_id)!.echeances.push(e);
+    });
+    
+    // Convertir en tableau et trier par saison (plus récent d'abord)
+    return Array.from(groups.values()).sort((a, b) => b.saison.localeCompare(a.saison));
+  }
+
+  // Déterminer la saison actuelle (juillet 2026 = saison 2025-2026)
+  function getCurrentSaison(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1; // 1-12
+    
+    // Si on est de septembre à août, la saison est année-1 - année
+    // Ex: juillet 2026 (mois 7) -> saison 2025-2026
+    if (month >= 9) {
+      return `${year}-${year + 1}`;
+    } else {
+      return `${year - 1}-${year}`;
+    }
+  }
+
+  // Vérifier si une échéance est réellement impayée (en retard ou en attente mais dont la date est passée)
+  function isEcheanceUnpaid(echeance: Echeance): boolean {
+    if (echeance.statut === 'retard') return true;
+    if (echeance.statut === 'payee') return false;
+    
+    // Pour les échéances en attente, vérifier si la date est passée
+    if (echeance.statut === 'en_attente') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(echeance.date_echeance);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    }
+    
+    return false;
+  }
+
   async function handleSave() {
     if (!editId) return;
     setSaving(true);
@@ -361,7 +458,21 @@ export default function AdminUsersPage() {
       matchesPayment = u.adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
     }
     
-    return matchesSearch && matchesDiscipline && matchesPayment;
+    // Filtre par statut QR
+    let matchesQRStatus = true;
+    if (filterQRStatus === "active") {
+      // Au moins une adhésion avec QR activé
+      matchesQRStatus = u.adhesions.some((adhesion) => adhesion.afficher_qr && adhesion.statut === 'payee');
+    } else if (filterQRStatus === "inactive") {
+      // Au moins une adhésion avec QR désactivé (manuellement, impayé, ou expirée)
+      matchesQRStatus = u.adhesions.some((adhesion) => 
+        !adhesion.afficher_qr || 
+        adhesion.has_payment_issues || 
+        adhesion.statut === 'expiree'
+      );
+    }
+    
+    return matchesSearch && matchesDiscipline && matchesPayment && matchesQRStatus;
   });
 
   if (!ready) return null;
@@ -375,8 +486,8 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div>
           <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;administration</a>
-          <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des utilisateurs</h1>
-          <p className="text-gray-400 mt-1 text-sm">Attribuer les rôles coach, affecter les disciplines, gérer les coordonnées.</p>
+          <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des utilisateurs & adhésions</h1>
+          <p className="text-gray-400 mt-1 text-sm">Attribuer les rôles coach, affecter les disciplines, consulter et créer des adhésions.</p>
         </div>
 
         {/* Edit panel */}
@@ -512,56 +623,140 @@ export default function AdminUsersPage() {
               )}
             </div>
 
-            {/* Échéances */}
+            {/* Échéances groupées par adhésion */}
             {echeances.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400">
-                  Échéances de paiement ({echeances.filter((e: any) => e.statut === 'en_attente').length} en attente)
-                </label>
-                <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-60 overflow-y-auto">
-                  {echeances.map((e: any) => (
-                    <div key={e.id} className="flex items-center justify-between text-xs border-b border-gray-700 pb-2 last:border-0 last:pb-0">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">Échéance {e.numero}</span>
-                          <span className="text-indigo-400">{e.montant}€</span>
-                          <span className="text-gray-500">• {new Date(e.date_echeance).toLocaleDateString('fr-FR')}</span>
-                        </div>
-                        <div className="text-gray-500 mt-0.5">{e.discipline}</div>
-                        {e.remarque && <div className="text-gray-400 italic mt-0.5">{e.remarque}</div>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {e.statut === 'payee' ? (
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 rounded-full font-semibold bg-green-900 text-green-300">
-                                Payée
-                              </span>
-                              <button
-                                onClick={() => annulerEcheancePayee(e.id)}
-                                className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-red-100 rounded text-[10px] font-semibold transition"
-                                title="Annuler le paiement"
-                              >
-                                Annuler
-                              </button>
-                            </div>
-                            {e.date_paiement && (
-                              <span className="text-gray-500 text-[10px]">
-                                {new Date(e.date_paiement).toLocaleDateString('fr-FR')}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-gray-400 flex items-center gap-2">
+                    Échéances de paiement
+                    {echeances.filter((e: any) => isEcheanceUnpaid(e)).length > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 font-semibold">
+                        {echeances.filter((e: any) => isEcheanceUnpaid(e)).length} impayée{echeances.filter((e: any) => isEcheanceUnpaid(e)).length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={filterSaison}
+                      onChange={(e) => setFilterSaison(e.target.value)}
+                      className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded px-2 py-1 transition"
+                    >
+                      <option value="all">Toutes les saisons</option>
+                      <option value="current">Saison actuelle ({getCurrentSaison()})</option>
+                    </select>
+                    <span className="text-xs text-gray-500">
+                      {echeances.filter((e: any) => e.statut === 'payee').length}/{echeances.length} payée{echeances.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  {groupEcheancesByAdhesion()
+                    .filter((group) => filterSaison === "all" || group.saison === getCurrentSaison())
+                    .map((group) => {
+                      const isExpanded = expandedAdhesions.has(group.adhesion_id);
+                      const unpaidCount = group.echeances.filter((e) => isEcheanceUnpaid(e)).length;
+                      const paidCount = group.echeances.filter((e) => e.statut === 'payee').length;
+                      
+                      return (
+                        <div key={group.adhesion_id} className="bg-gray-800 rounded-lg border border-gray-700">
+                          {/* En-tête de l'adhésion */}
                           <button
-                            onClick={() => marquerEcheancePayee(e.id)}
-                            className="px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-emerald-100 rounded font-semibold transition"
+                            onClick={() => toggleAdhesionExpand(group.adhesion_id)}
+                            className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-750 transition text-left"
                           >
-                            Marquer payée
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 text-lg">
+                                {isExpanded ? '▼' : '▶'}
+                              </span>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-white font-semibold text-sm">
+                                  {group.discipline}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 text-xs font-medium">
+                                  {group.saison}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-xs">
+                                  {group.mode_paiement === 'especes' ? '💵 Espèces' : '📝 Chèque'}
+                                </span>
+                                {unpaidCount > 0 && (
+                                  <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 text-xs font-semibold">
+                                    {unpaidCount} impayée{unpaidCount > 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span>{paidCount}/{group.echeances.length} payée{group.echeances.length > 1 ? 's' : ''}</span>
+                            </div>
                           </button>
-                        )}
-                      </div>
+                          
+                          {/* Échéances (visibles si expanded) */}
+                          {isExpanded && (
+                            <div className="px-3 pb-3 pt-1 space-y-2 border-t border-gray-700">
+                              {group.echeances.map((e) => (
+                                <div key={e.id} className="flex items-center justify-between text-xs border-b border-gray-700/50 pb-2 last:border-0 last:pb-0">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-white font-medium">Échéance {e.numero}</span>
+                                      <span className="text-indigo-400">{e.montant}€</span>
+                                      <span className="text-gray-500">• {new Date(e.date_echeance).toLocaleDateString('fr-FR')}</span>
+                                      {e.statut === 'retard' && (
+                                        <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 font-semibold text-[10px]">
+                                          EN RETARD
+                                        </span>
+                                      )}
+                                      {e.statut === 'en_attente' && !isEcheanceUnpaid(e) && (
+                                        <span className="px-2 py-0.5 rounded-full bg-blue-900 text-blue-300 font-semibold text-[10px]">
+                                          EN ATTENTE
+                                        </span>
+                                      )}
+                                    </div>
+                                    {e.remarque && <div className="text-gray-400 italic mt-0.5">{e.remarque}</div>}
+                                  </div>
+                                  <div className="flex items-center gap-2 ml-2">
+                                    {e.statut === 'payee' ? (
+                                      <div className="flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="px-2 py-0.5 rounded-full font-semibold bg-green-900 text-green-300">
+                                            Payée
+                                          </span>
+                                          <button
+                                            onClick={() => annulerEcheancePayee(e.id!)}
+                                            className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-red-100 rounded text-[10px] font-semibold transition"
+                                            title="Annuler le paiement"
+                                          >
+                                            Annuler
+                                          </button>
+                                        </div>
+                                        {e.date_paiement && (
+                                          <span className="text-gray-500 text-[10px]">
+                                            {new Date(e.date_paiement).toLocaleDateString('fr-FR')}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => marquerEcheancePayee(e.id!)}
+                                        className="px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-emerald-100 rounded font-semibold transition"
+                                      >
+                                        Marquer payée
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                  {filterSaison === "current" && groupEcheancesByAdhesion().filter((g) => g.saison === getCurrentSaison()).length === 0 && (
+                    <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-500 text-center">
+                      Aucune échéance pour la saison actuelle
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -590,10 +785,11 @@ export default function AdminUsersPage() {
         {/* Filters + list */}
         <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-800 space-y-3">
+            {/* Recherche et actualiser */}
             <div className="flex items-center gap-4">
               <h2 className="font-semibold text-white shrink-0">
                 Membres <span className="text-indigo-400 font-bold">{filtered.length}</span>
-                {(filterDiscipline !== "all" || filterPayment !== "all") && <span className="text-gray-500">/{users.length}</span>}
+                {(filterDiscipline !== "all" || filterPayment !== "all" || filterQRStatus !== "all") && <span className="text-gray-500">/{users.length}</span>}
               </h2>
               <input
                 value={search}
@@ -605,50 +801,88 @@ export default function AdminUsersPage() {
                 Actualiser
               </button>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-400 shrink-0">Filtrer par discipline :</label>
-              <select
-                value={filterDiscipline}
-                onChange={(e) => setFilterDiscipline(e.target.value)}
-                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
-              >
-                <option value="all">Toutes les disciplines</option>
-                {disciplines.map((d) => (
-                  <option key={d.key} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-              {filterDiscipline !== "all" && (
-                <button
-                  onClick={() => setFilterDiscipline("all")}
-                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
-                  title="Réinitialiser le filtre"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-400 shrink-0">Filtrer par paiement :</label>
-              <select
-                value={filterPayment}
-                onChange={(e) => setFilterPayment(e.target.value)}
-                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
-              >
-                <option value="all">Tous</option>
-                <option value="paid">Paiement OK</option>
-                <option value="unpaid">Impayés</option>
-              </select>
-              {filterPayment !== "all" && (
-                <button
-                  onClick={() => setFilterPayment("all")}
-                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
-                  title="Réinitialiser le filtre"
-                >
-                  ✕
-                </button>
-              )}
+
+            {/* Filtres en grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Filtre discipline */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Discipline</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterDiscipline}
+                    onChange={(e) => setFilterDiscipline(e.target.value)}
+                    className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                  >
+                    <option value="all">Toutes</option>
+                    {disciplines.map((d) => (
+                      <option key={d.key} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                  {filterDiscipline !== "all" && (
+                    <button
+                      onClick={() => setFilterDiscipline("all")}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition shrink-0"
+                      title="Réinitialiser"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtre paiement */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">
+                  Paiement
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterPayment}
+                    onChange={(e) => setFilterPayment(e.target.value)}
+                    className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="paid">Paiement OK</option>
+                    <option value="unpaid">Impayés</option>
+                  </select>
+                  {filterPayment !== "all" && (
+                    <button
+                      onClick={() => setFilterPayment("all")}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition shrink-0"
+                      title="Réinitialiser"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtre statut QR */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Statut QR</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterQRStatus}
+                    onChange={(e) => setFilterQRStatus(e.target.value)}
+                    className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="active">QR actif</option>
+                    <option value="inactive">QR inactif/impayé/expiré</option>
+                  </select>
+                  {filterQRStatus !== "all" && (
+                    <button
+                      onClick={() => setFilterQRStatus("all")}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition shrink-0"
+                      title="Réinitialiser"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

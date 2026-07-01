@@ -6,15 +6,15 @@ import Link from "next/link";
 
 const PAGES = [
   {
-    href: "/admin/helloasso",
-    title: "Adhesions",
-    description: "Consulter les adhésions créées automatiquement via HelloAsso.",
+    href: "/admin/users",
+    title: "Utilisateurs & Adhésions",
+    description: "Gérer les utilisateurs, promouvoir des coachs, consulter et créer des adhésions (HelloAsso, espèces, chèques).",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.519M9 20H4v-2a4 4 0 015.916-3.519M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zM3 10a3 3 0 116 0 3 3 0 01-6 0z" />
       </svg>
     ),
-    color: "indigo",
+    color: "sky",
   },
   {
     href: "/coach/annonces",
@@ -37,6 +37,17 @@ const PAGES = [
       </svg>
     ),
     color: "emerald",
+  },
+  {
+    href: "/admin/impayes",
+    title: "Impayés",
+    description: "Consulter la liste des adhérents avec paiements en attente ou refusés (HelloAsso, espèces, chèques).",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+    color: "red",
   },
   {
     href: "/admin/helloasso-config",
@@ -62,17 +73,6 @@ const PAGES = [
     color: "rose",
   },
   {
-    href: "/admin/users",
-    title: "Utilisateurs",
-    description: "Promouvoir des membres au rôle de coach, assigner leurs disciplines et gérer leurs coordonnées.",
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.519M9 20H4v-2a4 4 0 015.916-3.519M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zM3 10a3 3 0 116 0 3 3 0 01-6 0z" />
-      </svg>
-    ),
-    color: "sky",
-  },
-  {
     href: "/admin/zk",
     title: "Gestion ZK",
     description: "Configurer les pools de codes et la date de fin de saison par discipline.",
@@ -92,6 +92,7 @@ const colorMap: Record<string, string> = {
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
   emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
+  red: "bg-red-900/40 text-red-400 group-hover:bg-red-800/60",
 };
 
 export default function AdminPage() {

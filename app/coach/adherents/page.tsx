@@ -123,6 +123,23 @@ export default function CoachAdherentsPage() {
     }
   }
 
+  // Vérifier si une échéance est réellement impayée (en retard ou en attente mais dont la date est passée)
+  function isEcheanceUnpaid(echeance: Echeance): boolean {
+    if (echeance.statut === 'retard') return true;
+    if (echeance.statut === 'payee') return false;
+    
+    // Pour les échéances en attente, vérifier si la date est passée
+    if (echeance.statut === 'en_attente') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(echeance.date_echeance);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    }
+    
+    return false;
+  }
+
   // Helper pour ajouter des mois à une date
   function addMonths(date: Date, months: number): Date {
     const result = new Date(date);
@@ -435,17 +452,32 @@ export default function CoachAdherentsPage() {
             {/* Échéances */}
             {echeances.length > 0 && (
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400">
-                  Échéances de paiement ({echeances.filter((e: any) => e.statut === 'en_attente').length} en attente)
+                <label className="text-xs text-gray-400 flex items-center gap-2">
+                  Échéances de paiement
+                  {echeances.filter((e: any) => isEcheanceUnpaid(e)).length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 font-semibold">
+                      {echeances.filter((e: any) => isEcheanceUnpaid(e)).length} impayée{echeances.filter((e: any) => isEcheanceUnpaid(e)).length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </label>
                 <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-60 overflow-y-auto">
                   {echeances.map((e: any) => (
                     <div key={e.id} className="flex items-center justify-between text-xs border-b border-gray-700 pb-2 last:border-0 last:pb-0">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-white font-medium">Échéance {e.numero}</span>
                           <span className="text-indigo-400">{e.montant}€</span>
                           <span className="text-gray-500">• {new Date(e.date_echeance).toLocaleDateString('fr-FR')}</span>
+                          {e.statut === 'retard' && (
+                            <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 font-semibold text-[10px]">
+                              EN RETARD
+                            </span>
+                          )}
+                          {e.statut === 'en_attente' && !isEcheanceUnpaid(e) && (
+                            <span className="px-2 py-0.5 rounded-full bg-blue-900 text-blue-300 font-semibold text-[10px]">
+                              EN ATTENTE
+                            </span>
+                          )}
                         </div>
                         <div className="text-gray-500 mt-0.5">{e.discipline}</div>
                         {e.remarque && <div className="text-gray-400 italic mt-0.5">{e.remarque}</div>}

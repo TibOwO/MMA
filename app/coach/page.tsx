@@ -28,6 +28,17 @@ const PANELS = [
     color: "sky",
   },
   {
+    href: "/coach/impayes",
+    title: "Impayés",
+    description: "Voir les adhérents avec des paiements en attente ou refusés.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    color: "red",
+  },
+  {
     href: "/coach/annonces",
     title: "Annonces",
     description: "Publier des annonces pour informer vos adhérents.",
@@ -66,6 +77,7 @@ const PANELS = [
 const colorMap: Record<string, string> = {
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
+  red: "bg-red-900/40 text-red-400 group-hover:bg-red-800/60",
   amber: "bg-amber-900/40 text-amber-400 group-hover:bg-amber-800/60",
   emerald: "bg-emerald-900/40 text-emerald-400 group-hover:bg-emerald-800/60",
   violet: "bg-violet-900/40 text-violet-400 group-hover:bg-violet-800/60",
