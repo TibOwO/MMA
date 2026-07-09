@@ -10,7 +10,7 @@ import type { NextConfig } from "next";
 const BACKEND =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://mfc.alwaysdata.net/"  // Changez pour Alwaysdata en prod
+    ? "https://mfc.alwaysdata.net/"
     : "http://localhost:8000");
 
 console.log(`🔗 Backend API configuré : ${BACKEND}`);

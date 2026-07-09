@@ -162,20 +162,44 @@ export default function CoachAdherentsPage() {
       setCreateMontant(0);
       setCreateEcheances([]);
     } else if (type === "especes") {
-      const montant = createMontant > 0 ? createMontant : "" as any;
+      const montant = createMontant > 0 ? createMontant : 0;
       setCreateEcheances([
         { numero: 1, montant, date_echeance: new Date().toISOString().split('T')[0], remarque: "" }
       ]);
     } else {
       // plusieurs fois - initialiser avec 3 échéances
       const today = new Date();
-      const montantParEcheance = createMontant > 0 ? Math.ceil(createMontant / 3) : "" as any;
-      const reste = createMontant > 0 ? createMontant - 2*Math.ceil(createMontant / 3) : "" as any;
+      const montantParEcheance = createMontant > 0 ? Math.ceil(createMontant / 3) : 0;
+      const reste = createMontant > 0 ? createMontant - 2*Math.ceil(createMontant / 3) : 0;
       setCreateEcheances([
         { numero: 1, montant: montantParEcheance, date_echeance: today.toISOString().split('T')[0], remarque: "" },
         { numero: 2, montant: montantParEcheance, date_echeance: addMonths(today, 1).toISOString().split('T')[0], remarque: "" },
         { numero: 3, montant: reste, date_echeance: addMonths(today, 2).toISOString().split('T')[0], remarque: "" },
       ]);
+    }
+  }
+
+  // Mettre à jour les échéances quand le montant change
+  function handleMontantChange(newMontant: number) {
+    setCreateMontant(newMontant);
+    
+    // Pour paiement 1x, mettre à jour l'échéance unique
+    if (createType === "especes" && createEcheances.length === 1) {
+      setCreateEcheances([{
+        ...createEcheances[0],
+        montant: newMontant > 0 ? newMontant : 0
+      }]);
+    }
+    // Pour paiement plusieurs fois, recalculer automatiquement
+    else if (createType === "plusieurs" && createEcheances.length > 0) {
+      const nbEcheances = createEcheances.length;
+      const montantParEcheance = newMontant > 0 ? Math.ceil(newMontant / nbEcheances) : 0;
+      const reste = newMontant > 0 ? newMontant - (nbEcheances - 1) * montantParEcheance : 0;
+      
+      setCreateEcheances(prev => prev.map((e, idx) => ({
+        ...e,
+        montant: idx === nbEcheances - 1 ? reste : montantParEcheance
+      })));
     }
   }
 
@@ -188,7 +212,7 @@ export default function CoachAdherentsPage() {
     
     setCreateEcheances([
       ...createEcheances,
-      { numero: nextNumero, montant: "" as any, date_echeance: nextDate.toISOString().split('T')[0], remarque: "" }
+      { numero: nextNumero, montant: 0, date_echeance: nextDate.toISOString().split('T')[0], remarque: "" }
     ]);
   }
 
@@ -208,6 +232,12 @@ export default function CoachAdherentsPage() {
       return;
     }
 
+    // Validation du montant pour les adhésions payantes
+    if (createType !== "gratuite" && createMontant <= 0) {
+      setCreateError("Le montant total doit être supérieur à 0€");
+      return;
+    }
+
     setCreatingAdhesion(true);
     setCreateError("");
     try {
@@ -219,12 +249,15 @@ export default function CoachAdherentsPage() {
           discipline_key: createDisciplineKey,
           mode_paiement: createType === "gratuite" ? undefined : createModePaiement,
           montant_total: createMontant,
-          echeances: createType === "gratuite" ? [] : createEcheances.map(e => ({
-            numero: e.numero,
-            montant: parseFloat(String(e.montant)),
-            date_echeance: e.date_echeance,
-            remarque: e.remarque || "",
-          })),
+          echeances: createType === "gratuite" ? [] : createEcheances.map(e => {
+            const montant = parseFloat(String(e.montant));
+            return {
+              numero: e.numero,
+              montant: isNaN(montant) ? 0 : montant,
+              date_echeance: e.date_echeance,
+              remarque: e.remarque || "",
+            };
+          }),
         }),
       });
       const data = await res.json();
@@ -731,7 +764,7 @@ export default function CoachAdherentsPage() {
                     type="number"
                     step="0.01"
                     value={createMontant}
-                    onChange={(e) => setCreateMontant(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleMontantChange(parseFloat(e.target.value) || 0)}
                     className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-2 transition"
                     placeholder="300"
                   />

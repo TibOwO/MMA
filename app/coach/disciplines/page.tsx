@@ -39,6 +39,7 @@ export default function CoachDisciplinesPage() {
   const [horaireError, setHoraireError] = useState("");
   const [editingPresentationKey, setEditingPresentationKey] = useState<string | null>(null);
   const [editedPresentation, setEditedPresentation] = useState("");
+  const [editedTarif, setEditedTarif] = useState("");
   const [savingPresentation, setSavingPresentation] = useState(false);
 
   useEffect(() => {
@@ -92,9 +93,10 @@ export default function CoachDisciplinesPage() {
     loadData();
   }
 
-  function startEditPresentation(key: string, currentPresentation: string) {
+  function startEditPresentation(key: string, currentPresentation: string, currentTarif: string) {
     setEditingPresentationKey(key);
     setEditedPresentation(currentPresentation || "");
+    setEditedTarif(currentTarif || "");
   }
 
   async function handleSavePresentation(key: string) {
@@ -103,7 +105,10 @@ export default function CoachDisciplinesPage() {
       const res = await fetch(`/api/disciplines/${encodeURIComponent(key)}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ presentation: editedPresentation }),
+        body: JSON.stringify({
+          presentation: editedPresentation,
+          tarif: editedTarif,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -173,7 +178,7 @@ export default function CoachDisciplinesPage() {
                           <h3 className="text-sm font-medium text-gray-300">Description</h3>
                           {editingPresentationKey !== d.key && (
                             <button
-                              onClick={() => startEditPresentation(d.key, d.presentation)}
+                              onClick={() => startEditPresentation(d.key, d.presentation, d.tarif)}
                               className="text-xs text-indigo-400 hover:text-indigo-300 transition"
                             >
                               Modifier
@@ -182,6 +187,15 @@ export default function CoachDisciplinesPage() {
                         </div>
                         {editingPresentationKey === d.key ? (
                           <div className="space-y-2">
+                            <div>
+                              <label className="text-xs text-gray-500 block mb-1">Tarif</label>
+                              <input
+                                value={editedTarif}
+                                onChange={(e) => setEditedTarif(e.target.value)}
+                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200"
+                                placeholder="Ex: 300 €"
+                              />
+                            </div>
                             <textarea
                               value={editedPresentation}
                               onChange={(e) => setEditedPresentation(e.target.value)}

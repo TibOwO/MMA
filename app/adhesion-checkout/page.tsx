@@ -339,7 +339,7 @@ function AdhesionCheckoutContent() {
                           handleValidateCodePromo();
                         }
                       }}
-                      placeholder="BIENVENUE2025"
+                      placeholder="Code Promo"
                       disabled={validatingCode || !!codePromoData}
                       className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm uppercase disabled:bg-gray-100 text-gray-900 placeholder-gray-400 bg-white"
                     />

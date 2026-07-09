@@ -227,13 +227,32 @@ export default function ProfilPage() {
 }
 
 function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
+  const statutLabel = adhesion.statut === 'payee' 
+    ? 'Payée' 
+    : adhesion.statut === 'en_attente' 
+    ? 'En attente' 
+    : adhesion.statut === 'expiree' 
+    ? 'Expirée' 
+    : 'Remboursée';
+
+  const statutColor = adhesion.statut === 'payee'
+    ? 'text-green-400'
+    : adhesion.statut === 'en_attente'
+    ? 'text-blue-400'
+    : adhesion.statut === 'expiree'
+    ? 'text-amber-400'
+    : 'text-red-400';
+
   return (
     <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50 space-y-4">
       <h3 className="text-base font-bold text-white mb-4">
         {adhesion.discipline || "Adhésion"}
       </h3>
       <InfoRow label="Saison" value={adhesion.saison} />
-      <InfoRow label="Statut" value={adhesion.statut} />
+      <div className="flex justify-between items-center border-b border-gray-800 pb-4">
+        <span className="text-gray-400 text-sm">Statut</span>
+        <span className={`font-semibold ${statutColor}`}>{statutLabel}</span>
+      </div>
       {adhesion.code_zk !== null && adhesion.afficher_qr ? (
         <>
           <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
