@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
   // Modal création adhésion
   const [showCreateAdhesion, setShowCreateAdhesion] = useState(false);
   const [createDisciplineKey, setCreateDisciplineKey] = useState("");
-  const [createMontant, setCreateMontant] = useState(0);
+  const [createMontant, setCreateMontant] = useState("");
   const [createType, setCreateType] = useState<"gratuite" | "especes" | "plusieurs">("gratuite");
   const [createModePaiement, setCreateModePaiement] = useState<"especes" | "cheque">("especes");
   const [createEcheances, setCreateEcheances] = useState<Echeance[]>([]);
@@ -169,7 +169,7 @@ export default function AdminUsersPage() {
   function openCreateAdhesion() {
     setShowCreateAdhesion(true);
     setCreateDisciplineKey(disciplines[0]?.key || "");
-    setCreateMontant(0);
+    setCreateMontant("");
     setCreateType("gratuite");
     setCreateEcheances([]);
     setCreateError("");
@@ -178,47 +178,20 @@ export default function AdminUsersPage() {
   function handleTypeChange(type: "gratuite" | "especes" | "plusieurs") {
     setCreateType(type);
     if (type === "gratuite") {
-      setCreateMontant(0);
+      setCreateMontant("");
       setCreateEcheances([]);
     } else if (type === "especes") {
-      const montant = createMontant > 0 ? createMontant : 0;
       setCreateEcheances([
-        { numero: 1, montant, date_echeance: new Date().toISOString().split('T')[0], remarque: "" }
+        { numero: 1, montant: 0, date_echeance: new Date().toISOString().split('T')[0], remarque: "" }
       ]);
     } else {
       // plusieurs fois - initialiser avec 3 échéances (dates: aujourd'hui, +1 mois, +2 mois)
       const today = new Date();
-      const montantParEcheance = createMontant > 0 ? Math.ceil(createMontant / 3) : 0;
-      const reste = createMontant > 0 ? createMontant - 2*Math.ceil(createMontant / 3) : 0;
       setCreateEcheances([
-        { numero: 1, montant: montantParEcheance, date_echeance: today.toISOString().split('T')[0], remarque: "" },
-        { numero: 2, montant: montantParEcheance, date_echeance: addMonths(today, 1).toISOString().split('T')[0], remarque: "" },
-        { numero: 3, montant: reste, date_echeance: addMonths(today, 2).toISOString().split('T')[0], remarque: "" },
+        { numero: 1, montant: 0, date_echeance: today.toISOString().split('T')[0], remarque: "" },
+        { numero: 2, montant: 0, date_echeance: addMonths(today, 1).toISOString().split('T')[0], remarque: "" },
+        { numero: 3, montant: 0, date_echeance: addMonths(today, 2).toISOString().split('T')[0], remarque: "" },
       ]);
-    }
-  }
-
-  // Mettre à jour les échéances quand le montant change
-  function handleMontantChange(newMontant: number) {
-    setCreateMontant(newMontant);
-    
-    // Pour paiement 1x, mettre à jour l'échéance unique
-    if (createType === "especes" && createEcheances.length === 1) {
-      setCreateEcheances([{
-        ...createEcheances[0],
-        montant: newMontant > 0 ? newMontant : 0
-      }]);
-    }
-    // Pour paiement plusieurs fois, recalculer automatiquement
-    else if (createType === "plusieurs" && createEcheances.length > 0) {
-      const nbEcheances = createEcheances.length;
-      const montantParEcheance = newMontant > 0 ? Math.ceil(newMontant / nbEcheances) : 0;
-      const reste = newMontant > 0 ? newMontant - (nbEcheances - 1) * montantParEcheance : 0;
-      
-      setCreateEcheances(prev => prev.map((e, idx) => ({
-        ...e,
-        montant: idx === nbEcheances - 1 ? reste : montantParEcheance
-      })));
     }
   }
 
@@ -242,7 +215,12 @@ export default function AdminUsersPage() {
   }
 
   function updateEcheance(index: number, field: keyof Echeance, value: any) {
-    setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
+    if (field === 'montant') {
+      // Pour le montant, on parse le string pour stocker un nombre
+      setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, montant: value === "" ? 0 : parseFloat(value) || 0 } : e));
+    } else {
+      setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
+    }
   }
 
   async function handleCreateAdhesion() {
@@ -253,7 +231,7 @@ export default function AdminUsersPage() {
     }
 
     // Validation du montant pour les adhésions payantes
-    if (createType !== "gratuite" && createMontant <= 0) {
+    if (createType !== "gratuite" && (createMontant === "" || parseFloat(createMontant) <= 0)) {
       setCreateError("Le montant total doit être supérieur à 0€");
       return;
     }
@@ -268,7 +246,7 @@ export default function AdminUsersPage() {
           user_id: editId,
           discipline_key: createDisciplineKey,
           mode_paiement: createType === "gratuite" ? undefined : createModePaiement,
-          montant_total: createMontant,
+          montant_total: parseFloat(createMontant) || 0,
           echeances: createType === "gratuite" ? [] : createEcheances.map(e => {
             const montant = parseFloat(String(e.montant));
             return {
@@ -1053,20 +1031,21 @@ export default function AdminUsersPage() {
                 </div>
               )}
 
-              {/* Montant total */}
-              {createType !== "gratuite" && (
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs text-gray-400">Montant total (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={createMontant === 0 ? "" : createMontant}
-                    onChange={(e) => handleMontantChange(parseFloat(e.target.value) || 0)}
-                    className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-2 transition"
-                    placeholder="Montant total de l'adhésion"
-                  />
-                </div>
-              )}
+               {/* Montant total */}
+               {createType !== "gratuite" && (
+                 <div className="flex flex-col gap-1">
+                   <label className="text-xs text-gray-400">Montant total (€)</label>
+                   <input
+/*                   type="number"
+                     step="0.01"
+                     value={createMontant} */
+                     onChange={(e) => setCreateMontant(e.target.value)}
+                     className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-2 transition"
+                     placeholder="Montant total de l'adhésion"
+                     min="0"
+                   />
+                 </div>
+               )}
 
               {/* Tableau des échéances */}
               {createType === "plusieurs" && (
@@ -1092,16 +1071,17 @@ export default function AdminUsersPage() {
                           {ech.numero}
                         </div>
                         <div className="flex-1 grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[10px] text-gray-500">Montant (€)</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={ech.montant}
-                              onChange={(e) => updateEcheance(idx, 'montant', parseFloat(e.target.value) || 0)}
-                              className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded px-2 py-1.5"
-                            />
-                          </div>
+                           <div>
+                             <label className="text-[10px] text-gray-500">Montant (€)</label>
+                             <input
+                               type="number"
+                               step="0.01"
+                               value={ech.montant === 0 ? "" : ech.montant}
+                               onChange={(e) => updateEcheance(idx, 'montant', e.target.value)}
+                               className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded px-2 py-1.5"
+                               min="0"
+                             />
+                           </div>
                           <div>
                             <label className="text-[10px] text-gray-500">Date d'échéance</label>
                             <input
