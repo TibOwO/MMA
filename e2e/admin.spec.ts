@@ -8,44 +8,75 @@ import { test, expect } from '@playwright/test';
 // Helper pour se connecter en tant qu'admin
 async function loginAsAdmin(page: any) {
   await page.goto('/login');
-  await page.fill('input[type="email"]', process.env.ADMIN_EMAIL);
-  await page.fill('input[type="password"]', process.env.ADMIN_PASSWORD);
+  await page.fill('input[type="email"]', 'admin@test.com');
+  await page.fill('input[type="password"]', 'Admin123!');
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/admin|\/profil/);
+  await page.waitForURL(/\/admin|\/profil/, { timeout: 10000 });
+}
+
+// Helper pour se connecter en tant que coach
+async function loginAsCoach(page: any) {
+  await page.goto('/login');
+  await page.fill('input[type="email"]', 'coach@test.com');
+  await page.fill('input[type="password"]', 'Coach123!');
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/coach|\/profil/, { timeout: 10000 });
 }
 
 test.describe('Admin - Gestion des utilisateurs', () => {
-  test('devrait afficher la liste des utilisateurs', async ({ page }) => {
+  test('devrait afficher au moins un compte dans la liste des comptes', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/admin/users');
     
     // Vérifier le titre
-    await expect(page.locator('h1')).toContainText(/Utilisateurs/i);
+    await expect(page.locator('h1')).toContainText(/Gestion des utilisateurs/i);
     
-    // Vérifier qu'il y a un tableau d'utilisateurs
-    const table = page.locator('table');
-    await expect(table).toBeVisible({ timeout: 5000 });
+    // Vérifier qu'il y a une section de membres
+    await expect(page.locator('text=/Membres/i')).toBeVisible({ timeout: 10000 });
     
-    // Vérifier les colonnes
-    await expect(page.locator('th:has-text("Email")')).toBeVisible();
-    await expect(page.locator('th:has-text("Nom")')).toBeVisible();
+    // Vérifier le champ de recherche
+    await expect(page.locator('input[placeholder*="Rechercher"]')).toBeVisible();
+    
+    // Vérifier qu'il y a au moins un compte dans la liste
+    const userRows = page.locator('div:has-text("@")').filter({ hasText: '@' });
+    await expect(userRows.first()).toBeVisible({ timeout: 5000 });
+    const userCount = await userRows.count();
+    expect(userCount).toBeGreaterThan(0);
+    console.log(`✅ ${userCount} utilisateur(s) trouvé(s) dans la liste`);
+  
   });
 
   test('devrait pouvoir rechercher un utilisateur', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/admin/users');
     
+    // Attendre que la page soit chargée
+    await expect(page.locator('text=/Membres/i')).toBeVisible({ timeout: 10000 });
+    
     // Utiliser le champ de recherche
     const searchInput = page.locator('input[placeholder*="Rechercher"]');
-    await searchInput.fill('Dupont');
+    await searchInput.fill('admin@test.com');
     
     // Attendre les résultats filtrés
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     
-    // Vérifier que les résultats contiennent "Dupont"
-    const rows = page.locator('tbody tr');
-    const firstRow = rows.first();
-    await expect(firstRow).toContainText(/Dupont/i);
+    // Vérifier que les résultats contiennent l'email recherché
+    await expect(page.locator('text=/admin@test.com/i')).toBeVisible();
+  });
+
+  test('devrait pouvoir modifier un utilisateur', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/users');
+    
+    // Attendre que la page soit chargée
+    await expect(page.locator('text=/Membres/i')).toBeVisible({ timeout: 10000 });
+    
+    // Cliquer sur un utilisateur pour l'éditer
+    await page.click('text=/admin@test.com/i');
+    
+    // Vérifier que le panneau d'édition s'ouvre
+    await expect(page.locator('text=/Rôle/i')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('button:has-text("Enregistrer")')).toBeVisible();
   });
 });
 

@@ -34,6 +34,7 @@ const SportCard: React.FC<SportCardProps> = ({ name, description, imageUrl, link
 
   return (
     <div
+      data-testid="sport-card"
       onClick={() => router.push(link)}
       className="relative rounded-xl overflow-hidden shadow-lg cursor-pointer transform hover:scale-105 transition-transform duration-300 flex flex-col"
       style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: "cover", backgroundPosition: "center", minHeight: "320px" }}

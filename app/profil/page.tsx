@@ -256,11 +256,11 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
       {adhesion.code_zk !== null && adhesion.afficher_qr ? (
         <>
           <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
-          <div className="flex flex-col items-center gap-3 pt-2">
-            <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
-            <div className="bg-white p-3 rounded-xl">
-              <QRCodeSVG value={String(adhesion.code_zk)} size={160} />
-            </div>
+            <div className="flex flex-col items-center gap-3 pt-2">
+              <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
+              <div className="bg-white p-3 rounded-xl" data-testid="qr-code">
+                <QRCodeSVG value={String(adhesion.code_zk)} size={160} />
+              </div>
             <p className="text-xs text-gray-500 text-center max-w-xs">
               Scannez ce QR code au portique pour accéder au club
             </p>

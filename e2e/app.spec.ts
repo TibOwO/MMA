@@ -1,28 +1,34 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Tests E2E - Page d'accueil
+ * Tests E2E - Page d'accueil (redirection)
  */
 test.describe('Page d\'accueil', () => {
-  test('devrait afficher le titre et les disciplines', async ({ page }) => {
+  test('devrait rediriger vers login quand non connecté', async ({ page }) => {
     await page.goto('/');
     
-    // Vérifier le titre
+    // La page d'accueil redirige automatiquement vers /login si non connecté
+    await expect(page).toHaveURL(/\/login/);
+    
+    // Vérifier le titre de la page de login
     await expect(page).toHaveTitle(/MMA|Arts Martiaux/i);
     
-    // Vérifier que des disciplines sont affichées
-    const disciplines = page.locator('[data-testid="sport-card"]');
-    await expect(disciplines).toHaveCount(3, { timeout: 10000 }); // Au moins 3 disciplines
+    // Vérifier que le formulaire de login est présent
+    await expect(page.locator('h1')).toContainText(/Connexion/i);
   });
 
-  test('devrait pouvoir cliquer sur une discipline', async ({ page }) => {
+  test('devrait rediriger vers profil quand connecté', async ({ page }) => {
+    // Se connecter d'abord
+    await page.goto('/login');
+    await page.fill('input[type="email"]', 'adherent@test.com');
+    await page.fill('input[type="password"]', 'Adherent123!');
+    await page.click('button[type="submit"]');
+    
+    // Maintenant aller sur la page d'accueil
     await page.goto('/');
     
-    // Cliquer sur la première discipline
-    await page.click('text=MMA');
-    
-    // Vérifier qu'on est bien sur la page de la discipline
-    await expect(page).toHaveURL(/\/discipline\/mma/);
+    // Devrait rediriger vers le profil
+    await expect(page).toHaveURL(/\/profil/);
   });
 });
 

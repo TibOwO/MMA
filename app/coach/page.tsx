@@ -6,6 +6,17 @@ import Link from "next/link";
 
 const PANELS = [
   {
+    href: "/admin/dashboard",
+    title: "Dashboard Financier",
+    description: "Suivi des revenus de vos disciplines (HelloAsso et espèces/chèques).",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+    color: "indigo",
+  },
+  {
     href: "/coach/disciplines",
     title: "Mes disciplines",
     description: "Gérer les horaires, tarifs et description de vos disciplines.",
@@ -75,6 +86,7 @@ const PANELS = [
 ];
 
 const colorMap: Record<string, string> = {
+  indigo: "bg-indigo-900/40 text-indigo-400 group-hover:bg-indigo-800/60",
   rose: "bg-rose-900/40 text-rose-400 group-hover:bg-rose-800/60",
   sky: "bg-sky-900/40 text-sky-400 group-hover:bg-sky-800/60",
   red: "bg-red-900/40 text-red-400 group-hover:bg-red-800/60",
