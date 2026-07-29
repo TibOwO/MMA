@@ -60,7 +60,7 @@ export default function HelloAssoConfigPage() {
     if (!raw) { router.replace("/login"); return; }
     try {
       const user = JSON.parse(raw);
-      if (user.role !== "admin" && user.role !== "coach") { 
+      if (user.role !== "admin") { 
         router.replace("/"); 
         return; 
       }
