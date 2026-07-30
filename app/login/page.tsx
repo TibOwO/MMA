@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function LoginContent() {
   const router = useRouter();
@@ -62,9 +63,17 @@ function LoginContent() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1" htmlFor="password">
-              Mot de passe
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium" htmlFor="password">
+                Mot de passe
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+              >
+                Oublié ?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
