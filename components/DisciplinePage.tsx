@@ -44,7 +44,7 @@ const DisciplinePage: React.FC<DisciplineProps> = ({ name, presentation, tarif, 
         {tarif && (
           <div className="mt-5 inline-flex items-center gap-2 bg-indigo-900/50 border border-indigo-700 rounded-xl px-5 py-3">
             <span className="text-indigo-300 text-sm font-medium">Tarif</span>
-            <span className="text-white text-xl font-bold">{tarif}</span>
+            <span className="text-white text-xl font-bold">{tarif} €</span>
           </div>
         )}
       </div>

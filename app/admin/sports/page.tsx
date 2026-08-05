@@ -208,11 +208,14 @@ export default function AdminSportsPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs text-gray-400">Tarif <span className="text-gray-600">(ex: 300 €)</span></label>
+                <label className="text-xs text-gray-400">Tarif <span className="text-gray-600">(en €, vide = gratuit)</span></label>
                 <input
+                  type="number"
+                  min="0"
+                  step="0.01"
                   value={form.tarif}
                   onChange={(e) => setForm((f) => ({ ...f, tarif: e.target.value }))}
-                  placeholder="300 €"
+                  placeholder="300"
                   className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 placeholder-gray-600 rounded-xl px-4 py-2.5 transition"
                 />
               </div>
@@ -310,7 +313,7 @@ export default function AdminSportsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold text-white">{d.name}</span>
                         <span className="text-xs font-mono text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{d.key}</span>
-                        {d.tarif && <span className="text-xs text-emerald-400 bg-emerald-900/30 px-2 py-0.5 rounded">{d.tarif}</span>}
+                        {d.tarif && <span className="text-xs text-emerald-400 bg-emerald-900/30 px-2 py-0.5 rounded">{d.tarif} €</span>}
                         <span className="text-xs text-gray-500">{d.horaires.length} créneau{d.horaires.length !== 1 ? "x" : ""}</span>
                       </div>
                       {d.presentation && (

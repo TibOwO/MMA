@@ -419,7 +419,7 @@ export default function DashboardFinancierPage() {
                           <td className="py-3 px-4">
                             <div>
                               <p className="text-white font-medium">{discipline.discipline_name}</p>
-                              <p className="text-gray-400 text-sm">{discipline.tarif}</p>
+                              <p className="text-gray-400 text-sm">{discipline.tarif} €</p>
                             </div>
                           </td>
                           <td className="text-right py-3 px-4 text-white">

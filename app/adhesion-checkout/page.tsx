@@ -68,25 +68,24 @@ function AdhesionCheckoutContent() {
     }
   }, [error]);
 
-  // Extraire le montant numérique du tarif (ex: "300 €" -> 300)
+  // Extraire le montant numérique du tarif (ex: "300.50" -> 300.5). Vide = gratuit (0€).
   const extractAmount = (tarif: string): number => {
-    const match = tarif.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
+    const match = tarif.match(/(\d+(?:[.,]\d+)?)/);
+    return match ? parseFloat(match[1].replace(',', '.')) : 0;
   };
 
-  // Vérifier si la discipline est prête pour l'adhésion
+  // Formater le tarif pour l'affichage (vide = Gratuit)
+  const formatTarif = (tarif: string): string => {
+    return tarif.trim() ? `${tarif} €` : 'Gratuit';
+  };
+
+  // Vérifier si la discipline est prête pour l'adhésion (un tarif vide = adhésion gratuite, valide)
   const isDisciplineReady = (discipline: Discipline): boolean => {
-    return discipline.tarif.trim() !== '' && discipline.code_zk !== null;
+    return discipline.code_zk !== null;
   };
 
   // Message d'erreur pour discipline non configurée
   const getDisabledMessage = (discipline: Discipline): string => {
-    if (!discipline.tarif.trim() && discipline.code_zk === null) {
-      return 'Tarif et code ZK non configurés';
-    }
-    if (!discipline.tarif.trim()) {
-      return 'Tarif non configuré';
-    }
     if (discipline.code_zk === null) {
       return 'Code ZK non configuré';
     }
@@ -240,11 +239,9 @@ function AdhesionCheckoutContent() {
                     {discipline.presentation}
                   </p>
                 )}
-                {discipline.tarif && (
-                  <p className="text-lg font-semibold text-blue-600 mb-4">
-                    {discipline.tarif}
-                  </p>
-                )}
+                <p className="text-lg font-semibold text-blue-600 mb-4">
+                  {formatTarif(discipline.tarif)}
+                </p>
                 
                 {!isDisciplineReady(discipline) && (
                   <p className="text-sm text-amber-600 mb-3 bg-amber-50 px-3 py-2 rounded border border-amber-200">
@@ -286,7 +283,7 @@ function AdhesionCheckoutContent() {
             <h2 className="text-2xl font-bold mb-2">{selectedDiscipline.name}</h2>
             <p className="text-gray-600 mb-4">
               Tarif : <span className={`font-semibold ${codePromoData ? 'line-through text-gray-400' : 'text-blue-600'}`}>
-                {selectedDiscipline.tarif}
+                {formatTarif(selectedDiscipline.tarif)}
               </span>
               {codePromoData && (
                 <span className="ml-2 font-bold text-green-600">
@@ -397,9 +394,9 @@ function AdhesionCheckoutContent() {
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">Paiement comptant</div>
                     <div className="text-sm text-gray-600">
-                      Paiement en une seule fois : {codePromoData 
+                      Paiement en une seule fois : {codePromoData
                         ? `${calculateFinalPrice(selectedDiscipline.tarif).toFixed(2)}€`
-                        : selectedDiscipline.tarif}
+                        : formatTarif(selectedDiscipline.tarif)}
                     </div>
                   </div>
                 </div>

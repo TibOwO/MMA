@@ -164,7 +164,7 @@ export default function CoachDisciplinesPage() {
                   >
                     <div>
                       <span className="font-semibold text-white text-lg">{d.name}</span>
-                      {d.tarif && <span className="ml-3 text-sm text-emerald-400">{d.tarif}</span>}
+                      {d.tarif && <span className="ml-3 text-sm text-emerald-400">{d.tarif} €</span>}
                       <span className="ml-3 text-xs text-gray-500">{d.horaires.length} créneau{d.horaires.length !== 1 ? "x" : ""}</span>
                     </div>
                     <span className="text-gray-400 text-sm">{isOpen ? "▲" : "▼"}</span>
@@ -188,12 +188,15 @@ export default function CoachDisciplinesPage() {
                         {editingPresentationKey === d.key ? (
                           <div className="space-y-2">
                             <div>
-                              <label className="text-xs text-gray-500 block mb-1">Tarif</label>
+                              <label className="text-xs text-gray-500 block mb-1">Tarif (en €, vide = gratuit)</label>
                               <input
+                                type="number"
+                                min="0"
+                                step="0.01"
                                 value={editedTarif}
                                 onChange={(e) => setEditedTarif(e.target.value)}
                                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200"
-                                placeholder="Ex: 300 €"
+                                placeholder="300"
                               />
                             </div>
                             <textarea
