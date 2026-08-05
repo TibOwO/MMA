@@ -11,6 +11,7 @@ interface Discipline {
 interface Adhesion {
   id: number;
   discipline: string | null;
+  discipline_key: string | null;
   saison: string;
   statut: string;
   date_expiration: string | null;
@@ -80,6 +81,12 @@ export default function CoachAdherentsPage() {
   // Gestion échéances
   const [echeances, setEcheances] = useState<Echeance[]>([]);
   const [loadingEcheances, setLoadingEcheances] = useState(false);
+
+  // Transfert de discipline
+  const [transferAdhesionId, setTransferAdhesionId] = useState<number | null>(null);
+  const [transferDisciplineKey, setTransferDisciplineKey] = useState("");
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState("");
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -331,6 +338,37 @@ export default function CoachAdherentsPage() {
     }
   }
 
+  function openTransfer(adhesion: Adhesion) {
+    setTransferAdhesionId(adhesion.id);
+    setTransferDisciplineKey("");
+    setTransferError("");
+  }
+
+  async function handleTransferAdhesion() {
+    if (!transferAdhesionId || !transferDisciplineKey) return;
+    setTransferring(true);
+    setTransferError("");
+    try {
+      const res = await fetch(`/api/admin/adhesions/${transferAdhesionId}/transfer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discipline_key: transferDisciplineKey }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setTransferError(data.error ?? "Erreur lors du transfert");
+      } else {
+        setTransferAdhesionId(null);
+        loadData();
+        if (editId) loadEcheances(editId);
+      }
+    } catch (e: any) {
+      setTransferError(e.message ?? "Erreur serveur");
+    } finally {
+      setTransferring(false);
+    }
+  }
+
   async function toggleAfficherQR(adhesionId: number) {
     try {
       const res = await fetch(`/api/adhesions/${adhesionId}/toggle-qr`, {
@@ -416,62 +454,108 @@ export default function CoachAdherentsPage() {
                 </button>
               </div>
               {editUser.adhesions.length > 0 ? (
-                <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+                <div className="bg-gray-800 rounded-lg p-3 space-y-2 max-h-60 overflow-y-auto">
                   {editUser.adhesions.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between text-xs gap-2">
-                      <div className="flex-1">
-                        <span className="text-white font-medium">{a.discipline || 'Sans discipline'}</span>
-                        <span className="text-gray-500 ml-2">• {a.saison}</span>
-                        {a.ha_order_id?.startsWith('MANUAL-') && (
-                          <>
+                    <div key={a.id} className="text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1">
+                          <span className="text-white font-medium">{a.discipline || 'Sans discipline'}</span>
+                          <span className="text-gray-500 ml-2">• {a.saison}</span>
+                          {a.ha_order_id?.startsWith('MANUAL-') && (
                             <span className="ml-2 text-[10px] text-indigo-400">(manuelle)</span>
-                            <span className="ml-2 text-[10px] text-gray-400">
-                              {a.mode_paiement === 'especes' && '💵'}
-                              {a.mode_paiement === 'cheque' && '📝'}
-                              {a.mode_paiement === 'helloasso' && '💳'}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {a.date_expiration && (
-                          <span className="text-gray-400">
-                            {new Date(a.date_expiration).toLocaleDateString('fr-FR')}
+                          )}
+                          <span className="ml-2 text-[10px] text-gray-400">
+                            {a.mode_paiement === 'especes' && '💵'}
+                            {a.mode_paiement === 'cheque' && '📝'}
+                            {a.mode_paiement === 'helloasso' && '💳'}
+                            {a.mode_paiement === 'transfert' && '🔁'}
                           </span>
-                        )}
-                        <span
-                          className={`px-2 py-0.5 rounded-full font-semibold ${
-                            a.statut === 'payee'
-                              ? 'bg-green-900 text-green-300'
-                              : a.statut === 'expiree'
-                              ? 'bg-amber-900 text-amber-300'
-                              : 'bg-red-900 text-red-300'
-                          }`}
-                        >
-                          {a.statut === 'payee' ? 'Payée' : a.statut === 'expiree' ? 'Expirée' : 'Remboursée'}
-                        </span>
-                        <button
-                          onClick={() => toggleAfficherQR(a.id)}
-                          className={`px-2 py-0.5 rounded font-semibold transition text-[10px] ${
-                            a.afficher_qr 
-                              ? 'bg-green-700 hover:bg-green-600 text-green-100' 
-                              : 'bg-red-700 hover:bg-red-600 text-red-100'
-                          }`}
-                          title={a.afficher_qr ? "Désactiver le QR code" : "Activer le QR code"}
-                        >
-                          {a.afficher_qr ? '🔓 QR' : '🔒 QR'}
-                          {a.qr_override_manuel && <span className="ml-1 text-yellow-300" title="Override manuel actif (impayé)">!</span>}
-                        </button>
-                        {a.ha_order_id?.startsWith('MANUAL-') && (
-                          <button
-                            onClick={() => deleteAdhesionManuelle(a.id)}
-                            className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-red-100 rounded font-semibold transition"
-                            title="Supprimer cette adhésion manuelle"
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {a.date_expiration && (
+                            <span className="text-gray-400">
+                              {new Date(a.date_expiration).toLocaleDateString('fr-FR')}
+                            </span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 rounded-full font-semibold ${
+                              a.statut === 'payee'
+                                ? 'bg-green-900 text-green-300'
+                                : a.statut === 'expiree'
+                                ? 'bg-amber-900 text-amber-300'
+                                : 'bg-red-900 text-red-300'
+                            }`}
                           >
-                            ✕
+                            {a.statut === 'payee' ? 'Payée' : a.statut === 'expiree' ? 'Expirée' : 'Remboursée'}
+                          </span>
+                          <button
+                            onClick={() => toggleAfficherQR(a.id)}
+                            className={`px-2 py-0.5 rounded font-semibold transition text-[10px] ${
+                              a.afficher_qr
+                                ? 'bg-green-700 hover:bg-green-600 text-green-100'
+                                : 'bg-red-700 hover:bg-red-600 text-red-100'
+                            }`}
+                            title={a.afficher_qr ? "Désactiver le QR code" : "Activer le QR code"}
+                          >
+                            {a.afficher_qr ? '🔓 QR' : '🔒 QR'}
+                            {a.qr_override_manuel && <span className="ml-1 text-yellow-300" title="Override manuel actif (impayé)">!</span>}
                           </button>
-                        )}
+                          <button
+                            onClick={() => openTransfer(a)}
+                            className="px-2 py-0.5 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded font-semibold transition text-[10px]"
+                            title="Transférer vers une autre discipline"
+                          >
+                            🔁
+                          </button>
+                          {a.ha_order_id?.startsWith('MANUAL-') && (
+                            <button
+                              onClick={() => deleteAdhesionManuelle(a.id)}
+                              className="px-2 py-0.5 bg-red-700 hover:bg-red-600 text-red-100 rounded font-semibold transition"
+                              title="Supprimer cette adhésion manuelle"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
                       </div>
+
+                      {transferAdhesionId === a.id && (
+                        <div className="mt-2 bg-gray-900 border border-indigo-800 rounded-lg p-3 flex flex-col gap-2">
+                          <label className="text-[10px] text-gray-400">Transférer vers la discipline :</label>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={transferDisciplineKey}
+                              onChange={(e) => setTransferDisciplineKey(e.target.value)}
+                              className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded-lg px-2 py-1.5"
+                            >
+                              <option value="">Choisir une discipline…</option>
+                              {disciplines
+                                .filter((d) => d.key !== a.discipline_key)
+                                .map((d) => (
+                                  <option key={d.key} value={d.key}>
+                                    {d.name}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              onClick={handleTransferAdhesion}
+                              disabled={transferring || !transferDisciplineKey}
+                              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded-lg transition text-[10px]"
+                            >
+                              {transferring ? "…" : "Confirmer"}
+                            </button>
+                            <button
+                              onClick={() => setTransferAdhesionId(null)}
+                              className="text-gray-400 hover:text-white px-2 py-1.5 rounded-lg transition text-[10px]"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                          {transferError && (
+                            <p className="text-red-400 text-[10px]">{transferError}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
