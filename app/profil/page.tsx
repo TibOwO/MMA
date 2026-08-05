@@ -13,6 +13,14 @@ interface SessionUser {
   role: string;
 }
 
+interface Horaire {
+  id: number;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
+  description: string;
+}
+
 interface Adhesion {
   saison: string;
   statut: string;
@@ -20,7 +28,18 @@ interface Adhesion {
   discipline_key: string | null;
   code_zk: number | null;
   afficher_qr: boolean;
+  horaires: Horaire[];
 }
+
+const JOURS_LABEL: Record<string, string> = {
+  lundi: "Lundi",
+  mardi: "Mardi",
+  mercredi: "Mercredi",
+  jeudi: "Jeudi",
+  vendredi: "Vendredi",
+  samedi: "Samedi",
+  dimanche: "Dimanche",
+};
 
 interface Annonce {
   id: number;
@@ -194,6 +213,46 @@ export default function ProfilPage() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Mes horaires */}
+        {adhesions.some((a) => a.horaires.length > 0) && (
+          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
+            <h2 className="text-lg font-semibold text-indigo-200">🕒 Mes horaires</h2>
+            {adhesions
+              .filter((a) => a.horaires.length > 0)
+              .map((adhesion, i) => (
+                <div key={i} className="space-y-3">
+                  {adhesions.length > 1 && (
+                    <h3 className="text-sm font-bold text-white">{adhesion.discipline}</h3>
+                  )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-800/50">
+                          <th className="px-4 py-2 text-indigo-300 text-sm font-medium rounded-l-lg">Jour</th>
+                          <th className="px-4 py-2 text-indigo-300 text-sm font-medium">Horaire</th>
+                          <th className="px-4 py-2 text-indigo-300 text-sm font-medium rounded-r-lg">Détail</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adhesion.horaires.map((h) => (
+                          <tr key={h.id} className="border-t border-gray-800">
+                            <td className="px-4 py-2.5 capitalize font-medium text-gray-100">
+                              {JOURS_LABEL[h.jour] ?? h.jour}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-300">
+                              {h.heure_debut} – {h.heure_fin}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-500 text-sm">{h.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
           </div>
         )}
 
