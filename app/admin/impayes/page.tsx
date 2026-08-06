@@ -131,12 +131,6 @@ export default function AdminImpayesPage() {
     }
   }, [filterModePaiement, filterDiscipline]);
 
-  // Navigation vers le détail d'une adhésion
-  const handleViewDetails = (adhesionId: number) => {
-    // TODO: Créer une page de détail d'adhésion
-    console.log("Voir détails adhésion", adhesionId);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 text-gray-100 p-8">
