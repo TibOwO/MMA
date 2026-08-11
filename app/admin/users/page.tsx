@@ -643,16 +643,23 @@ function AdminUsersContent() {
                           )}
                           <span
                             className={`px-2 py-0.5 rounded-full font-semibold ${
-                              a.statut === 'payee'
+                              a.statut === 'payee' && a.has_payment_issues
+                                ? 'bg-red-900 text-red-300'
+                                : a.statut === 'payee'
                                 ? 'bg-green-900 text-green-300'
                                 : a.statut === 'en_attente'
                                 ? 'bg-blue-900 text-blue-300'
-                                : a.statut === 'expiree'
-                                ? 'bg-amber-900 text-amber-300'
-                                : 'bg-red-900 text-red-300'
+                                : 'bg-amber-900 text-amber-300'
                             }`}
+                            title={a.statut === 'payee' && a.has_payment_issues ? "Échéance(s) en retard ou paiement HelloAsso refusé" : undefined}
                           >
-                            {a.statut === 'payee' ? 'Payée' : a.statut === 'en_attente' ? 'En attente' : a.statut === 'expiree' ? 'Expirée' : 'Remboursée'}
+                            {a.statut === 'payee' && a.has_payment_issues
+                              ? 'Impayé'
+                              : a.statut === 'payee'
+                              ? 'Payée'
+                              : a.statut === 'en_attente'
+                              ? 'En attente'
+                              : 'Expirée'}
                           </span>
                           <button
                             onClick={() => toggleAfficherQR(a.id)}
