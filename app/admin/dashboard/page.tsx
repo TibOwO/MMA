@@ -40,6 +40,7 @@ interface EvolutionMois {
 
 interface Impaye {
   id: number;
+  user_id: number | null;
   nom: string;
   prenom: string;
   email: string;
@@ -67,6 +68,7 @@ interface DisciplineDisponible {
 }
 
 interface UtilisateurEcheance {
+  user_id: number | null;
   prenom: string;
   nom: string;
   email: string;
@@ -463,7 +465,15 @@ export default function DashboardFinancierPage() {
                     </thead>
                     <tbody>
                       {data.utilisateurs_echeances_en_attente.map((user, idx) => (
-                        <tr key={`${user.nom}-${user.prenom}-${idx}`} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <tr
+                          key={`${user.nom}-${user.prenom}-${idx}`}
+                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${userRole === "admin" && user.user_id ? "cursor-pointer" : ""}`}
+                          onClick={() => {
+                            if (userRole === "admin" && user.user_id) {
+                              router.push(`/admin/users?userId=${user.user_id}`);
+                            }
+                          }}
+                        >
                           <td className="py-3 px-4">
                             <div>
                               <p className="text-white font-medium">{user.prenom} {user.nom}</p>
@@ -526,7 +536,15 @@ export default function DashboardFinancierPage() {
                     </thead>
                     <tbody>
                       {data.impayes.map((impaye) => (
-                        <tr key={impaye.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <tr
+                          key={impaye.id}
+                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${userRole === "admin" && impaye.user_id ? "cursor-pointer" : ""}`}
+                          onClick={() => {
+                            if (userRole === "admin" && impaye.user_id) {
+                              router.push(`/admin/users?userId=${impaye.user_id}`);
+                            }
+                          }}
+                        >
                           <td className="py-3 px-4">
                             <div>
                               <p className="text-white font-medium">{impaye.prenom} {impaye.nom}</p>

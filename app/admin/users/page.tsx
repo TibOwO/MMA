@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Discipline {
   key: string;
@@ -67,8 +67,9 @@ const ROLE_COLOR: Record<string, string> = {
   membre: "bg-gray-700 text-gray-300",
 };
 
-export default function AdminUsersPage() {
+function AdminUsersContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
@@ -130,6 +131,16 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => { if (ready) loadData(); }, [ready]);
+
+  // Ouvre automatiquement la fiche d'un utilisateur si ?userId=... est présent
+  // dans l'URL (ex: lien depuis le dashboard financier).
+  useEffect(() => {
+    if (users.length === 0) return;
+    const userIdParam = searchParams.get("userId");
+    if (!userIdParam) return;
+    const target = users.find((u) => u.id === Number(userIdParam));
+    if (target) openEdit(target);
+  }, [users, searchParams]);
 
   function openEdit(u: User) {
     setEditId(u.id);
@@ -1244,5 +1255,13 @@ export default function AdminUsersPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminUsersContent />
+    </Suspense>
   );
 }
