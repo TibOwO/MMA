@@ -38,21 +38,6 @@ interface EvolutionMois {
   ca_estime: number;
 }
 
-interface Impaye {
-  id: number;
-  user_id: number | null;
-  nom: string;
-  prenom: string;
-  email: string;
-  discipline: string;
-  discipline_key: string;
-  mode_paiement: string;
-  type_impaye: string;
-  details: string;
-  montant_impaye?: number;
-  saison: string;
-}
-
 interface StatsModePaiement {
   mode_paiement: string;
   mode_paiement_label: string;
@@ -100,7 +85,6 @@ interface DashboardData {
   stats_globales: StatsGlobales;
   stats_par_discipline: StatsDiscipline[];
   evolution_temporelle: EvolutionMois[];
-  impayes: Impaye[];
   stats_modes_paiement: StatsModePaiement[];
   utilisateurs_echeances_en_attente: UtilisateurEcheance[];
   disciplines_disponibles: DisciplineDisponible[];
@@ -483,8 +467,8 @@ export default function DashboardFinancierPage() {
                           <td className="py-3 px-4 text-white">{user.discipline}</td>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              user.mode_paiement === 'HelloAsso' 
-                                ? 'bg-blue-900/50 text-blue-300' 
+                              user.mode_paiement === 'HelloAsso'
+                                ? 'bg-blue-900/50 text-blue-300'
                                 : 'bg-yellow-900/50 text-yellow-300'
                             }`}>
                               {user.mode_paiement}
@@ -509,68 +493,6 @@ export default function DashboardFinancierPage() {
                           </td>
                           <td className="text-right py-3 px-4 text-orange-400 font-semibold">
                             {formatCurrency(user.montant_total)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Impayés détaillés */}
-            {data.impayes.length > 0 && (
-              <div className="bg-gray-900 rounded-xl p-6">
-                <h2 className="text-xl font-semibold text-white mb-6">Impayés détaillés</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left py-3 px-4 text-gray-300 font-medium">Adhérent</th>
-                        <th className="text-left py-3 px-4 text-gray-300 font-medium">Discipline</th>
-                        <th className="text-left py-3 px-4 text-gray-300 font-medium">Mode paiement</th>
-                        <th className="text-left py-3 px-4 text-gray-300 font-medium">Type d'impayé</th>
-                        <th className="text-left py-3 px-4 text-gray-300 font-medium">Détails</th>
-                        <th className="text-right py-3 px-4 text-gray-300 font-medium">Montant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.impayes.map((impaye) => (
-                        <tr
-                          key={impaye.id}
-                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${userRole === "admin" && impaye.user_id ? "cursor-pointer" : ""}`}
-                          onClick={() => {
-                            if (userRole === "admin" && impaye.user_id) {
-                              router.push(`/admin/users?userId=${impaye.user_id}`);
-                            }
-                          }}
-                        >
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="text-white font-medium">{impaye.prenom} {impaye.nom}</p>
-                              <p className="text-gray-400 text-sm">{impaye.email}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-white">{impaye.discipline}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              impaye.mode_paiement === 'HelloAsso' 
-                                ? 'bg-blue-900/50 text-blue-300' 
-                                : 'bg-yellow-900/50 text-yellow-300'
-                            }`}>
-                              {impaye.mode_paiement}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-red-400">{impaye.type_impaye}</td>
-                          <td className="py-3 px-4 text-gray-300 text-sm">
-                            <div className="space-y-1 whitespace-pre-wrap">
-                              {impaye.details.split(' | ').map((detail, idx) => (
-                                <div key={idx} className="text-xs">{detail}</div>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="text-right py-3 px-4 text-red-400 font-semibold">
-                            {impaye.montant_impaye ? formatCurrency(impaye.montant_impaye) : '-'}
                           </td>
                         </tr>
                       ))}
