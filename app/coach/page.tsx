@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const PANELS = [
   {
-    href: "/admin/dashboard",
+    href: "/coach/dashboard",
     title: "Dashboard Financier",
     description: "Suivi des revenus de vos disciplines (HelloAsso et espèces/chèques).",
     icon: (

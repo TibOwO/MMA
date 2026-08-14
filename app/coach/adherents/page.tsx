@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Discipline {
   key: string;
@@ -55,8 +55,9 @@ const ROLE_COLOR: Record<string, string> = {
   membre: "bg-gray-700 text-gray-300",
 };
 
-export default function CoachAdherentsPage() {
+function CoachAdherentsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
@@ -112,9 +113,20 @@ export default function CoachAdherentsPage() {
 
   useEffect(() => { if (ready) loadData(); }, [ready]);
 
+  // Ouvre automatiquement la fiche d'un adhérent si ?userId=... est présent
+  // dans l'URL (ex: lien depuis le dashboard financier).
+  useEffect(() => {
+    if (users.length === 0) return;
+    const userIdParam = searchParams.get("userId");
+    if (!userIdParam) return;
+    const target = users.find((u) => u.id === Number(userIdParam));
+    if (target) openEdit(target);
+  }, [users, searchParams]);
+
   function openEdit(u: User) {
     setEditId(u.id);
     loadEcheances(u.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function loadEcheances(userId: number) {
@@ -971,5 +983,13 @@ export default function CoachAdherentsPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function CoachAdherentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <CoachAdherentsContent />
+    </Suspense>
   );
 }
