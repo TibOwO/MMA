@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 interface Annonce {
   id: number;
-  titre: string;
   contenu: string;
   destinataire: string;
   disciplines: { key: string; name: string }[];
@@ -36,7 +35,6 @@ export default function AnnoncesPage() {
 
   // Formulaire
   const [formData, setFormData] = useState({
-    titre: "",
     contenu: "",
     destinataire: "adherents" as string,
     discipline_keys: [] as string[],
@@ -144,7 +142,6 @@ export default function AnnoncesPage() {
   const handleEdit = (annonce: Annonce) => {
     setEditingAnnonce(annonce);
     setFormData({
-      titre: annonce.titre,
       contenu: annonce.contenu,
       destinataire: annonce.destinataire,
       discipline_keys: annonce.disciplines.map((d) => d.key),
@@ -187,7 +184,6 @@ export default function AnnoncesPage() {
     const defaultExpirationStr = defaultExpiration.toISOString().slice(0, 16);
 
     setFormData({
-      titre: "",
       contenu: "",
       destinataire: userRole === "coach" ? "adherents" : "tous",
       discipline_keys: [],
@@ -237,21 +233,7 @@ export default function AnnoncesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Titre <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.titre}
-                  onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-2"
-                  placeholder="Annulation du cours de mardi"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Contenu <span className="text-red-500">*</span>
+                  Message <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={formData.contenu}
@@ -356,9 +338,9 @@ export default function AnnoncesPage() {
             <div className="divide-y divide-gray-800">
               {annonces.map((annonce) => (
                 <div key={annonce.id} className="p-4 hover:bg-gray-800/40 transition">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-bold text-white">{annonce.titre}</h3>
-                    <div className="flex gap-2">
+                  <div className="flex justify-between items-start gap-4 mb-2">
+                    <p className="text-gray-200 text-sm whitespace-pre-wrap flex-1">{annonce.contenu}</p>
+                    <div className="flex gap-2 shrink-0">
                       <button
                         onClick={() => handleEdit(annonce)}
                         className="text-blue-400 hover:text-blue-300 text-sm"
@@ -373,7 +355,6 @@ export default function AnnoncesPage() {
                       </button>
                     </div>
                   </div>
-                  <p className="text-gray-300 text-sm mb-2 whitespace-pre-wrap">{annonce.contenu}</p>
                   <div className="flex gap-4 text-xs text-gray-500 flex-wrap">
                     <span>📅 Expire le {new Date(annonce.date_expiration).toLocaleString("fr-FR")}</span>
                     {annonce.disciplines.length > 0 && (

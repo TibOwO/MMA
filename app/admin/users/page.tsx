@@ -67,6 +67,16 @@ const ROLE_COLOR: Record<string, string> = {
   membre: "bg-gray-700 text-gray-300",
 };
 
+// Libellés des modes de paiement, alignés sur MODE_PAIEMENT_CHOICES côté Django.
+// Une valeur absente de cette table n'affiche aucun badge, plutôt qu'un libellé faux.
+const MODE_PAIEMENT_LABEL: Record<string, string> = {
+  helloasso: "💳 HelloAsso",
+  especes: "💵 Espèces",
+  cheque: "📝 Chèque",
+  transfert: "🔁 Transfert",
+  gratuite: "🎁 Gratuite",
+};
+
 function AdminUsersContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -796,9 +806,11 @@ function AdminUsersContent() {
                                 <span className="px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 text-xs font-medium">
                                   {group.saison}
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-xs">
-                                  {group.mode_paiement === 'especes' ? '💵 Espèces' : '📝 Chèque'}
-                                </span>
+                                {MODE_PAIEMENT_LABEL[group.mode_paiement] && (
+                                  <span className="px-2 py-0.5 rounded-full bg-gray-700 text-gray-300 text-xs">
+                                    {MODE_PAIEMENT_LABEL[group.mode_paiement]}
+                                  </span>
+                                )}
                                 {unpaidCount > 0 && (
                                   <span className="px-2 py-0.5 rounded-full bg-red-900 text-red-300 text-xs font-semibold">
                                     {unpaidCount} impayée{unpaidCount > 1 ? 's' : ''}

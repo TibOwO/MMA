@@ -43,7 +43,6 @@ const JOURS_LABEL: Record<string, string> = {
 
 interface Annonce {
   id: number;
-  titre: string;
   contenu: string;
   destinataire: string;
   disciplines: { key: string; name: string }[];
@@ -56,6 +55,12 @@ const roleLabel: Record<string, string> = {
   admin: "Administrateur",
   coach: "Coach",
   membre: "Membre",
+};
+
+const DESTINATAIRE_BADGE: Record<string, { label: string; className: string }> = {
+  tous: { label: "👥 Tous", className: "bg-blue-900/40 text-blue-300" },
+  coachs: { label: "🎓 Coachs", className: "bg-violet-900/40 text-violet-300" },
+  adherents: { label: "👤 Adhérents", className: "bg-green-900/40 text-green-300" },
 };
 
 export default function ProfilPage() {
@@ -102,93 +107,100 @@ export default function ProfilPage() {
 
   if (!user) return null;
 
+  const disciplinesAnnoncees = Array.from(
+    new Set(annonces.flatMap((a) => a.disciplines.map((d) => d.name)))
+  );
+
+  const annoncesVisibles = annonces.filter((a) => {
+    if (filterDiscipline === "all") return true;
+    return a.disciplines.some((d) => d.name === filterDiscipline);
+  });
+
+  const adhesionsAvecHoraires = adhesions.filter((a) => a.horaires.length > 0);
+
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
+      <div className="max-w-2xl mx-auto space-y-6">
 
-        {/* Titre */}
-        <h1 className="text-3xl font-extrabold text-indigo-300 text-center">Mon espace</h1>
+        {/* En-tête */}
+        <header className="text-center space-y-1">
+          <h1 className="text-3xl font-extrabold text-indigo-300">Mon espace</h1>
+          <p className="text-gray-400 text-sm">
+            {user.prenom} {user.nom}
+          </p>
+        </header>
 
         {/* Annonces */}
         {annonces.length > 0 && (
-          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-semibold text-indigo-200">📢 Annonces</h2>
-              {(() => {
-                const allDisciplineNames = Array.from(
-                  new Set(annonces.flatMap((a) => a.disciplines.map((d) => d.name)))
-                );
-                return allDisciplineNames.length > 0 ? (
-                  <select
-                    value={filterDiscipline}
-                    onChange={(e) => setFilterDiscipline(e.target.value)}
-                    className="bg-gray-800 border border-gray-700 text-gray-100 rounded px-3 py-1.5 text-sm"
-                  >
-                    <option value="all">Toutes</option>
-                    {allDisciplineNames.map((discipline) => (
-                      <option key={discipline} value={discipline}>
-                        {discipline}
-                      </option>
-                    ))}
-                  </select>
-                ) : null;
-              })()}
-            </div>
+          <Section
+            icon="📢"
+            title="Annonces"
+            action={
+              disciplinesAnnoncees.length > 0 ? (
+                <select
+                  value={filterDiscipline}
+                  onChange={(e) => setFilterDiscipline(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-3 py-1.5 text-sm"
+                >
+                  <option value="all">Toutes</option>
+                  {disciplinesAnnoncees.map((discipline) => (
+                    <option key={discipline} value={discipline}>
+                      {discipline}
+                    </option>
+                  ))}
+                </select>
+              ) : null
+            }
+          >
+            {annoncesVisibles.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Aucune annonce pour cette discipline.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {annoncesVisibles.map((annonce) => {
+                  const badge = DESTINATAIRE_BADGE[annonce.destinataire];
+                  return (
+                    <article
+                      key={annonce.id}
+                      className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50 hover:border-gray-600/50 transition"
+                    >
+                      <p className="text-gray-100 text-sm leading-relaxed whitespace-pre-wrap">
+                        {annonce.contenu}
+                      </p>
 
-            <div className="space-y-4">
-              {annonces
-                .filter((a) => {
-                  if (filterDiscipline === "all") return true;
-                  return a.disciplines.some((d) => d.name === filterDiscipline);
-                })
-                .map((annonce) => (
-                  <div
-                    key={annonce.id}
-                    className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50 hover:border-gray-600/50 transition"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-base font-bold text-white">{annonce.titre}</h3>
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-                          annonce.destinataire === "tous"
-                            ? "bg-blue-900/40 text-blue-400"
-                            : annonce.destinataire === "coachs"
-                            ? "bg-violet-900/40 text-violet-400"
-                            : "bg-green-900/40 text-green-400"
-                        }`}
-                      >
-                        {annonce.destinataire === "tous" && "👥"}
-                        {annonce.destinataire === "coachs" && "🎓"}
-                        {annonce.destinataire === "adherents" && "👤"}
-                      </span>
-                    </div>
-
-                    <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap">{annonce.contenu}</p>
-
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <div className="flex gap-3 flex-wrap">
+                      <div className="mt-3 pt-3 border-t border-gray-700/50 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-500">
+                        {badge && (
+                          <span className={`font-semibold px-2 py-0.5 rounded-full ${badge.className}`}>
+                            {badge.label}
+                          </span>
+                        )}
                         <span>✍️ {annonce.auteur_nom}</span>
                         {annonce.disciplines.length > 0 && (
                           <span>📚 {annonce.disciplines.map((d) => d.name).join(", ")}</span>
                         )}
+                        <span className="ml-auto">
+                          📅 {new Date(annonce.date_creation).toLocaleDateString("fr-FR")}
+                        </span>
                       </div>
-                      <span>📅 {new Date(annonce.date_creation).toLocaleDateString("fr-FR")}</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </Section>
         )}
 
         {/* Adhésions */}
         {adhesions.length === 0 ? (
-          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg text-center text-gray-400">
+          <div className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-lg text-center text-gray-400">
             <p className="mb-2 font-semibold text-white">Aucune adhésion active</p>
-            <p className="text-sm">Scannez un QR code dans les locaux du club pour vous inscrire à une discipline.</p>
+            <p className="text-sm">
+              Scannez un QR code dans les locaux du club pour vous inscrire à une discipline.
+            </p>
           </div>
         ) : (
-          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg">
-            <h2 className="text-lg font-semibold text-indigo-200 mb-6">Mes adhésions</h2>
+          <Section icon="🥋" title="Mes adhésions">
             {adhesions.length === 1 ? (
               // Une seule adhésion : affichage normal
               <AdhesionCard adhesion={adhesions[0]} />
@@ -198,33 +210,33 @@ export default function ProfilPage() {
                 <div className="overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scroll-smooth">
                   <div className="flex gap-4" style={{ width: `${adhesions.length * 100}%` }}>
                     {adhesions.map((adhesion, i) => (
-                      <div key={i} className="snap-center shrink-0" style={{ width: `${100 / adhesions.length}%`, minWidth: "300px" }}>
+                      <div
+                        key={i}
+                        className="snap-center shrink-0"
+                        style={{ width: `${100 / adhesions.length}%`, minWidth: "300px" }}
+                      >
                         <AdhesionCard adhesion={adhesion} />
                       </div>
                     ))}
                   </div>
                 </div>
-                {adhesions.length > 1 && (
-                  <div className="flex justify-center gap-2 mt-4">
-                    {adhesions.map((_, i) => (
-                      <div key={i} className="w-2 h-2 rounded-full bg-gray-700"></div>
-                    ))}
-                  </div>
-                )}
+                <div className="flex justify-center gap-2 mt-2">
+                  {adhesions.map((_, i) => (
+                    <div key={i} className="w-2 h-2 rounded-full bg-gray-700"></div>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
+          </Section>
         )}
 
         {/* Mes horaires */}
-        {adhesions.some((a) => a.horaires.length > 0) && (
-          <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-6">
-            <h2 className="text-lg font-semibold text-indigo-200">🕒 Mes horaires</h2>
-            {adhesions
-              .filter((a) => a.horaires.length > 0)
-              .map((adhesion, i) => (
-                <div key={i} className="space-y-3">
-                  {adhesions.length > 1 && (
+        {adhesionsAvecHoraires.length > 0 && (
+          <Section icon="🕒" title="Mes horaires">
+            <div className="space-y-6">
+              {adhesionsAvecHoraires.map((adhesion, i) => (
+                <div key={i} className="space-y-2">
+                  {adhesionsAvecHoraires.length > 1 && (
                     <h3 className="text-sm font-bold text-white">{adhesion.discipline}</h3>
                   )}
                   <div className="overflow-x-auto">
@@ -253,35 +265,63 @@ export default function ProfilPage() {
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
+          </Section>
         )}
 
         {/* Informations personnelles */}
-        <div className="bg-gray-900 rounded-2xl p-8 shadow-lg space-y-5">
-          <h2 className="text-lg font-semibold text-indigo-200 mb-2">Informations personnelles</h2>
-
-          <InfoRow label="Identifiant" value={`#${user.id}`} />
-          <InfoRow label="Prénom" value={user.prenom} />
-          <InfoRow label="Nom" value={user.nom} />
-          <InfoRow label="Email" value={user.email} />
-          <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-            <span className="text-gray-400 text-sm">Rôle</span>
-            <span
-              className={`text-sm font-semibold px-3 py-0.5 rounded-full ${
-                user.role === "admin"
-                  ? "bg-red-900 text-red-200"
-                  : user.role === "coach"
-                  ? "bg-yellow-900 text-yellow-200"
-                  : "bg-green-900 text-green-200"
-              }`}
-            >
-              {roleLabel[user.role] ?? user.role}
-            </span>
-          </div>
-        </div>
+        <Section icon="👤" title="Informations personnelles">
+          <dl className="divide-y divide-gray-800">
+            <InfoRow label="Identifiant" value={`#${user.id}`} />
+            <InfoRow label="Prénom" value={user.prenom} />
+            <InfoRow label="Nom" value={user.nom} />
+            <InfoRow label="Email" value={user.email} />
+            <InfoRow
+              label="Rôle"
+              value={
+                <span
+                  className={`text-sm font-semibold px-3 py-0.5 rounded-full ${
+                    user.role === "admin"
+                      ? "bg-red-900 text-red-200"
+                      : user.role === "coach"
+                      ? "bg-yellow-900 text-yellow-200"
+                      : "bg-green-900 text-green-200"
+                  }`}
+                >
+                  {roleLabel[user.role] ?? user.role}
+                </span>
+              }
+            />
+          </dl>
+        </Section>
 
       </div>
     </main>
+  );
+}
+
+function Section({
+  icon,
+  title,
+  action,
+  children,
+}: {
+  icon?: string;
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="bg-gray-900 rounded-2xl p-6 sm:p-8 shadow-lg">
+      <div className="flex justify-between items-center gap-4 mb-5">
+        <h2 className="text-lg font-semibold text-indigo-200 flex items-center gap-2">
+          {icon && <span aria-hidden="true">{icon}</span>}
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -303,36 +343,40 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
     : 'text-red-400';
 
   return (
-    <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50 space-y-4">
-      <h3 className="text-base font-bold text-white mb-4">
+    <div className="bg-gray-800/50 rounded-xl p-5 sm:p-6 border border-gray-700/50 h-full">
+      <h3 className="text-base font-bold text-white mb-3">
         {adhesion.discipline || "Adhésion"}
       </h3>
-      <InfoRow label="Saison" value={adhesion.saison} />
-      <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-        <span className="text-gray-400 text-sm">Statut</span>
-        <span className={`font-semibold ${statutColor}`}>{statutLabel}</span>
-      </div>
-      {adhesion.code_zk !== null && adhesion.afficher_qr ? (
-        <>
+
+      <dl className="divide-y divide-gray-800">
+        <InfoRow label="Saison" value={adhesion.saison} />
+        <InfoRow
+          label="Statut"
+          value={<span className={`font-semibold ${statutColor}`}>{statutLabel}</span>}
+        />
+        {adhesion.code_zk !== null && adhesion.afficher_qr && (
           <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
-            <div className="flex flex-col items-center gap-3 pt-2">
-              <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
-              <div className="bg-white p-3 rounded-xl" data-testid="qr-code">
-                <QRCodeSVG value={String(adhesion.code_zk)} size={160} />
-              </div>
-            <p className="text-xs text-gray-500 text-center max-w-xs">
-              Scannez ce QR code au portique pour accéder au club
-            </p>
+        )}
+      </dl>
+
+      {adhesion.code_zk !== null && adhesion.afficher_qr ? (
+        <div className="flex flex-col items-center gap-3 mt-5">
+          <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
+          <div className="bg-white p-3 rounded-xl" data-testid="qr-code">
+            <QRCodeSVG value={String(adhesion.code_zk)} size={160} />
           </div>
-        </>
+          <p className="text-xs text-gray-500 text-center max-w-xs">
+            Scannez ce QR code au portique pour accéder au club
+          </p>
+        </div>
       ) : adhesion.code_zk !== null && !adhesion.afficher_qr ? (
-        <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-4 mt-2">
+        <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-4 mt-5">
           <p className="text-sm text-red-300 text-center">
             🔒 Votre QR code a été temporairement désactivé. Contactez votre coach pour plus d&apos;informations.
           </p>
         </div>
       ) : (
-        <div className="bg-amber-900/20 border border-amber-800/50 rounded-xl p-4 mt-2">
+        <div className="bg-amber-900/20 border border-amber-800/50 rounded-xl p-4 mt-5">
           <div className="flex gap-3">
             <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -350,11 +394,11 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-      <span className="text-gray-400 text-sm">{label}</span>
-      <span className="text-gray-100 font-medium">{value}</span>
+    <div className="flex justify-between items-center gap-4 py-3 first:pt-0 last:pb-0">
+      <dt className="text-gray-400 text-sm">{label}</dt>
+      <dd className="text-gray-100 font-medium text-right">{value}</dd>
     </div>
   );
 }

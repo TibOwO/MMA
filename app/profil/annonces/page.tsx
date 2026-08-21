@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 interface Annonce {
   id: number;
-  titre: string;
   contenu: string;
   destinataire: string;
   discipline_key: string | null;
@@ -114,8 +113,7 @@ export default function AnnoncesAdherentPage() {
                 key={annonce.id}
                 className="bg-gray-900 rounded-2xl p-6 shadow-md hover:shadow-lg transition"
               >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-bold text-white">{annonce.titre}</h3>
+                <div className="flex justify-end mb-3">
                   <span
                     className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                       annonce.destinataire === "tous"
@@ -131,7 +129,7 @@ export default function AnnoncesAdherentPage() {
                   </span>
                 </div>
 
-                <p className="text-gray-300 text-sm mb-4 whitespace-pre-wrap">{annonce.contenu}</p>
+                <p className="text-gray-200 text-sm mb-4 whitespace-pre-wrap">{annonce.contenu}</p>
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <div className="flex gap-4">
