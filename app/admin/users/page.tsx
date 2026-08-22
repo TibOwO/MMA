@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { formaterTelephone, normaliserTelephone } from "../../../lib/telephone";
+
 interface Discipline {
   key: string;
   name: string;
@@ -50,6 +52,8 @@ interface User {
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;
+  telephone_enfant: string;
   role: string;
   disciplines: string[];
   adhesions: Adhesion[];
@@ -93,6 +97,8 @@ function AdminUsersContent() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editRole, setEditRole] = useState("membre");
   const [editDisciplines, setEditDisciplines] = useState<string[]>([]);
+  const [editTelephone, setEditTelephone] = useState("");
+  const [editTelephoneEnfant, setEditTelephoneEnfant] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveOk, setSaveOk] = useState(false);
@@ -156,6 +162,8 @@ function AdminUsersContent() {
     setEditId(u.id);
     setEditRole(u.role);
     setEditDisciplines(u.disciplines);
+    setEditTelephone(formaterTelephone(u.telephone));
+    setEditTelephoneEnfant(formaterTelephone(u.telephone_enfant));
     setSaveError("");
     setSaveOk(false);
     loadEcheances(u.id); // Charger les échéances de l'utilisateur
@@ -485,6 +493,18 @@ function AdminUsersContent() {
 
   async function handleSave() {
     if (!editId) return;
+
+    const telephone = normaliserTelephone(editTelephone);
+    if (telephone === null) {
+      setSaveError("Numéro de téléphone invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
+    const telephoneEnfant = normaliserTelephone(editTelephoneEnfant);
+    if (telephoneEnfant === null) {
+      setSaveError("Numéro de téléphone de l'enfant invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
+
     setSaving(true);
     setSaveError("");
     setSaveOk(false);
@@ -492,7 +512,12 @@ function AdminUsersContent() {
       const res = await fetch(`/api/admin/users/${editId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: editRole, disciplines: editDisciplines }),
+        body: JSON.stringify({
+          role: editRole,
+          disciplines: editDisciplines,
+          telephone,
+          telephone_enfant: telephoneEnfant,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -508,10 +533,14 @@ function AdminUsersContent() {
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
+    // Recherche par numéro : on compare les chiffres seuls, pour retrouver
+    // "0612345678" aussi bien en tapant "06 12" qu'en tapant "0612".
+    const chiffresRecherches = q.replace(/\D/g, "");
     const matchesSearch = (
       u.nom.toLowerCase().includes(q) ||
       u.prenom.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+      u.email.toLowerCase().includes(q) ||
+      (chiffresRecherches !== "" && (u.telephone || "").includes(chiffresRecherches))
     );
     
     // Filtre par discipline
@@ -589,6 +618,30 @@ function AdminUsersContent() {
                     {ROLE_LABEL[r]}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Téléphones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Téléphone</label>
+                <input
+                  type="tel"
+                  value={editTelephone}
+                  onChange={(e) => setEditTelephone(e.target.value)}
+                  placeholder="06 12 34 56 78"
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Téléphone de l&apos;enfant</label>
+                <input
+                  type="tel"
+                  value={editTelephoneEnfant}
+                  onChange={(e) => setEditTelephoneEnfant(e.target.value)}
+                  placeholder="06 12 34 56 78"
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100"
+                />
               </div>
             </div>
 
@@ -1035,7 +1088,10 @@ function AdminUsersContent() {
                       <span className="font-medium text-white">{u.prenom} {u.nom}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ROLE_COLOR[u.role]}`}>{ROLE_LABEL[u.role]}</span>
                     </div>
-                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {u.email}
+                      {u.telephone && <span className="ml-2">· {formaterTelephone(u.telephone)}</span>}
+                    </p>
                     {u.role === "coach" && u.disciplines.length > 0 && (
                       <p className="text-xs text-teal-400 mt-0.5">Enseigne : {u.disciplines.join(", ")}</p>
                     )}

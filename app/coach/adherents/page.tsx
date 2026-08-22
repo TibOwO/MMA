@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { formaterTelephone } from "../../../lib/telephone";
+
 interface Discipline {
   key: string;
   name: string;
@@ -38,6 +40,8 @@ interface User {
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;
+  telephone_enfant: string;
   role: string;
   disciplines: string[];
   adhesions: Adhesion[];
@@ -403,10 +407,14 @@ function CoachAdherentsContent() {
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
+    // Recherche par numéro : on compare les chiffres seuls, pour retrouver
+    // "0612345678" aussi bien en tapant "06 12" qu'en tapant "0612".
+    const chiffresRecherches = q.replace(/\D/g, "");
     const matchesSearch = (
       u.nom.toLowerCase().includes(q) ||
       u.prenom.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+      u.email.toLowerCase().includes(q) ||
+      (chiffresRecherches !== "" && (u.telephone || "").includes(chiffresRecherches))
     );
     
     // Filtre par discipline
@@ -450,6 +458,22 @@ function CoachAdherentsContent() {
                 <span className="ml-2 text-sm text-gray-400 font-normal">{editUser.email}</span>
               </h2>
               <button onClick={() => setEditId(null)} className="text-gray-500 hover:text-white text-xl leading-none transition">×</button>
+            </div>
+
+            {/* Contacts (lecture seule : la modification se fait côté admin) */}
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+              <span className="text-gray-400">
+                Téléphone :{" "}
+                <span className="text-gray-100 font-medium">
+                  {editUser.telephone ? formaterTelephone(editUser.telephone) : "non renseigné"}
+                </span>
+              </span>
+              {editUser.telephone_enfant && (
+                <span className="text-gray-400">
+                  Téléphone de l&apos;enfant :{" "}
+                  <span className="text-gray-100 font-medium">{formaterTelephone(editUser.telephone_enfant)}</span>
+                </span>
+              )}
             </div>
 
             {/* Adhésions */}
@@ -749,7 +773,10 @@ function CoachAdherentsContent() {
                       <span className="font-medium text-white">{u.prenom} {u.nom}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ROLE_COLOR[u.role]}`}>{ROLE_LABEL[u.role]}</span>
                     </div>
-                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {u.email}
+                      {u.telephone && <span className="ml-2">· {formaterTelephone(u.telephone)}</span>}
+                    </p>
                     {u.adhesions.length > 0 && (
                       <p className="text-xs text-indigo-400 mt-0.5">
                         Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}

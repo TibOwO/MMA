@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 
 import { QRCodeSVG } from "qrcode.react";
 
+import { formaterTelephone, normaliserTelephone } from "../../lib/telephone";
+
 interface SessionUser {
   id: number;
   nom: string;
   prenom: string;
   email: string;
+  telephone: string;
+  telephone_enfant: string;
   role: string;
 }
 
@@ -70,6 +74,12 @@ export default function ProfilPage() {
   const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
   const router = useRouter();
 
+  // Édition des informations personnelles
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ prenom: "", nom: "", telephone: "", telephone_enfant: "" });
+  const [editError, setEditError] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     // Charger le profil
     fetch("/api/mon-profil")
@@ -104,6 +114,64 @@ export default function ProfilPage() {
         // Ignorer les erreurs de chargement des annonces
       });
   }, [router]);
+
+  const ouvrirEdition = () => {
+    if (!user) return;
+    setEditForm({
+      prenom: user.prenom,
+      nom: user.nom,
+      telephone: formaterTelephone(user.telephone),
+      telephone_enfant: formaterTelephone(user.telephone_enfant),
+    });
+    setEditError("");
+    setEditing(true);
+  };
+
+  const enregistrerEdition = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditError("");
+
+    const telephone = normaliserTelephone(editForm.telephone);
+    if (!telephone) {
+      setEditError("Numéro de téléphone invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
+    const telephoneEnfant = normaliserTelephone(editForm.telephone_enfant);
+    if (telephoneEnfant === null) {
+      setEditError("Numéro de téléphone de l'enfant invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/mon-profil/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          prenom: editForm.prenom.trim(),
+          nom: editForm.nom.trim(),
+          telephone,
+          telephone_enfant: telephoneEnfant,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setUser(data.user);
+        // Le header et les pages qui lisent localStorage doivent suivre
+        localStorage.setItem("user", JSON.stringify(data.user));
+        window.dispatchEvent(new Event("userChanged"));
+        setEditing(false);
+      } else {
+        setEditError(data.error || "Erreur lors de l'enregistrement.");
+      }
+    } catch {
+      setEditError("Erreur de connexion au serveur.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user) return null;
 
@@ -270,29 +338,132 @@ export default function ProfilPage() {
         )}
 
         {/* Informations personnelles */}
-        <Section icon="👤" title="Informations personnelles">
-          <dl className="divide-y divide-gray-800">
-            <InfoRow label="Identifiant" value={`#${user.id}`} />
-            <InfoRow label="Prénom" value={user.prenom} />
-            <InfoRow label="Nom" value={user.nom} />
-            <InfoRow label="Email" value={user.email} />
-            <InfoRow
-              label="Rôle"
-              value={
-                <span
-                  className={`text-sm font-semibold px-3 py-0.5 rounded-full ${
-                    user.role === "admin"
-                      ? "bg-red-900 text-red-200"
-                      : user.role === "coach"
-                      ? "bg-yellow-900 text-yellow-200"
-                      : "bg-green-900 text-green-200"
-                  }`}
+        <Section
+          icon="👤"
+          title="Informations personnelles"
+          action={
+            !editing ? (
+              <button
+                onClick={ouvrirEdition}
+                className="text-xs text-gray-500 hover:text-gray-300 transition"
+              >
+                Modifier
+              </button>
+            ) : null
+          }
+        >
+          {editing ? (
+            <form onSubmit={enregistrerEdition} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1" htmlFor="edit-prenom">Prénom</label>
+                  <input
+                    id="edit-prenom"
+                    type="text"
+                    required
+                    pattern="[^0-9]*"
+                    value={editForm.prenom}
+                    onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1" htmlFor="edit-nom">Nom</label>
+                  <input
+                    id="edit-nom"
+                    type="text"
+                    required
+                    pattern="[^0-9]*"
+                    value={editForm.nom}
+                    onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1" htmlFor="edit-tel">Téléphone</label>
+                  <input
+                    id="edit-tel"
+                    type="tel"
+                    required
+                    value={editForm.telephone}
+                    onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
+                    placeholder="06 12 34 56 78"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1" htmlFor="edit-tel-enfant">
+                    Téléphone de l&apos;enfant <span className="text-gray-600">(facultatif)</span>
+                  </label>
+                  <input
+                    id="edit-tel-enfant"
+                    type="tel"
+                    value={editForm.telephone_enfant}
+                    onChange={(e) => setEditForm({ ...editForm, telephone_enfant: e.target.value })}
+                    placeholder="06 12 34 56 78"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100"
+                  />
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                L&apos;adresse email sert d&apos;identifiant de connexion et ne peut pas être modifiée ici.
+              </p>
+
+              {editError && <p className="text-red-400 text-sm">{editError}</p>}
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-xl transition text-sm disabled:opacity-50"
                 >
-                  {roleLabel[user.role] ?? user.role}
-                </span>
-              }
-            />
-          </dl>
+                  {saving ? "Enregistrement…" : "Enregistrer"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold px-4 py-2 rounded-xl transition text-sm"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          ) : (
+            <dl className="divide-y divide-gray-800">
+              <InfoRow label="Identifiant" value={`#${user.id}`} />
+              <InfoRow label="Prénom" value={user.prenom} />
+              <InfoRow label="Nom" value={user.nom} />
+              <InfoRow label="Email" value={user.email} />
+              <InfoRow
+                label="Téléphone"
+                value={
+                  user.telephone
+                    ? formaterTelephone(user.telephone)
+                    : <span className="text-gray-500 font-normal">Non renseigné</span>
+                }
+              />
+              {user.telephone_enfant && (
+                <InfoRow label="Téléphone de l'enfant" value={formaterTelephone(user.telephone_enfant)} />
+              )}
+              <InfoRow
+                label="Rôle"
+                value={
+                  <span
+                    className={`text-sm font-semibold px-3 py-0.5 rounded-full ${
+                      user.role === "admin"
+                        ? "bg-red-900 text-red-200"
+                        : user.role === "coach"
+                        ? "bg-yellow-900 text-yellow-200"
+                        : "bg-green-900 text-green-200"
+                    }`}
+                  >
+                    {roleLabel[user.role] ?? user.role}
+                  </span>
+                }
+              />
+            </dl>
+          )}
         </Section>
 
       </div>

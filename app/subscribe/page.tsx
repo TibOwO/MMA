@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { normaliserTelephone } from "../../lib/telephone";
+
 export default function SubscribePage() {
   const router = useRouter();
 
@@ -10,6 +12,8 @@ export default function SubscribePage() {
     nom: "",
     prenom: "",
     email: "",
+    telephone: "",
+    telephone_enfant: "",
     password: "",
     confirm: "",
   });
@@ -42,6 +46,16 @@ export default function SubscribePage() {
       setError("Le nom et le prénom doivent être différents.");
       return;
     }
+    const telephone = normaliserTelephone(form.telephone);
+    if (!telephone) {
+      setError("Numéro de téléphone invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
+    const telephoneEnfant = normaliserTelephone(form.telephone_enfant);
+    if (telephoneEnfant === null) {
+      setError("Numéro de téléphone de l'enfant invalide. Format attendu : 06 12 34 56 78.");
+      return;
+    }
     if (form.password.length < 8) {
       setError("Le mot de passe doit contenir au moins 8 caractères.");
       return;
@@ -60,6 +74,8 @@ export default function SubscribePage() {
           nom: form.nom.trim(),
           prenom: form.prenom.trim(),
           email: form.email.trim().toLowerCase(),
+          telephone,
+          telephone_enfant: telephoneEnfant,
           password: form.password,
         }),
       });
@@ -134,6 +150,39 @@ export default function SubscribePage() {
               required
               value={form.email}
               onChange={handleChange}
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="telephone">
+              Téléphone
+            </label>
+            <input
+              id="telephone"
+              name="telephone"
+              type="tel"
+              required
+              autoComplete="tel"
+              value={form.telephone}
+              onChange={handleChange}
+              placeholder="06 12 34 56 78"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="telephone_enfant">
+              Téléphone de l&apos;enfant{" "}
+              <span className="text-gray-500 font-normal">(facultatif)</span>
+            </label>
+            <input
+              id="telephone_enfant"
+              name="telephone_enfant"
+              type="tel"
+              value={form.telephone_enfant}
+              onChange={handleChange}
+              placeholder="06 12 34 56 78"
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
             />
           </div>
