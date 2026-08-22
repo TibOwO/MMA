@@ -9,9 +9,11 @@ interface StatsGlobales {
   adhesions_en_attente: number;
   ca_total: number;
   ca_helloasso: number;
-  ca_especes_cheques: number;
+  ca_especes: number;
+  ca_cheque: number;
   nb_impayes_helloasso: number;
-  nb_impayes_especes_cheques: number;
+  nb_impayes_especes: number;
+  nb_impayes_cheque: number;
   taux_paiement: number;
   nb_adherents_echelonnes: number;
   montant_echeances_a_recevoir: number;
@@ -25,9 +27,11 @@ interface StatsDiscipline {
   adhesions_payees: number;
   ca_total: number;
   ca_helloasso: number;
-  ca_especes_cheques: number;
+  ca_especes: number;
+  ca_cheque: number;
   nb_impayes_helloasso: number;
-  nb_impayes_especes_cheques: number;
+  nb_impayes_especes: number;
+  nb_impayes_cheque: number;
   taux_paiement: number;
 }
 
@@ -212,7 +216,7 @@ export default function DashboardFinancier() {
             </p>
             <h1 className="text-3xl font-extrabold text-white">Dashboard Financier</h1>
             <p className="text-gray-400 mt-1 text-sm">
-              Suivi des revenus HelloAsso et espèces/chèques
+              Suivi des revenus HelloAsso, espèces et chèques
             </p>
           </div>
           
@@ -321,10 +325,10 @@ export default function DashboardFinancier() {
                     </svg>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm">
+                <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-sm">
                   <span className="text-green-400">HelloAsso: {formatCurrency(data.stats_globales.ca_helloasso)}</span>
-                  <span className="text-gray-400 mx-2">•</span>
-                  <span className="text-yellow-400">Espèces/Chèques: {formatCurrency(data.stats_globales.ca_especes_cheques)}</span>
+                  <span className="text-yellow-400">Espèces: {formatCurrency(data.stats_globales.ca_especes)}</span>
+                  <span className="text-orange-400">Chèques: {formatCurrency(data.stats_globales.ca_cheque)}</span>
                 </div>
               </div>
 
@@ -373,7 +377,7 @@ export default function DashboardFinancier() {
                   <div>
                     <p className="text-red-300 text-sm font-medium">Impayés</p>
                     <p className="text-2xl font-bold text-white mt-1">
-                      {data.stats_globales.nb_impayes_helloasso + data.stats_globales.nb_impayes_especes_cheques}
+                      {data.stats_globales.nb_impayes_helloasso + data.stats_globales.nb_impayes_especes + data.stats_globales.nb_impayes_cheque}
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
@@ -382,10 +386,10 @@ export default function DashboardFinancier() {
                     </svg>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm">
+                <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-sm">
                   <span className="text-red-400">HA: {data.stats_globales.nb_impayes_helloasso}</span>
-                  <span className="text-gray-400 mx-2">•</span>
-                  <span className="text-red-400">Espèces: {data.stats_globales.nb_impayes_especes_cheques}</span>
+                  <span className="text-red-400">Espèces: {data.stats_globales.nb_impayes_especes}</span>
+                  <span className="text-red-400">Chèques: {data.stats_globales.nb_impayes_cheque}</span>
                 </div>
               </div>
             </div>
@@ -402,7 +406,8 @@ export default function DashboardFinancier() {
                         <th className="text-right py-3 px-4 text-gray-300 font-medium">Adhésions</th>
                         <th className="text-right py-3 px-4 text-gray-300 font-medium">CA Total</th>
                         <th className="text-right py-3 px-4 text-gray-300 font-medium">HelloAsso</th>
-                        <th className="text-right py-3 px-4 text-gray-300 font-medium">Espèces/Chèques</th>
+                        <th className="text-right py-3 px-4 text-gray-300 font-medium">Espèces</th>
+                        <th className="text-right py-3 px-4 text-gray-300 font-medium">Chèques</th>
                         <th className="text-right py-3 px-4 text-gray-300 font-medium">Impayés</th>
                       </tr>
                     </thead>
@@ -416,7 +421,7 @@ export default function DashboardFinancier() {
                             </div>
                           </td>
                           <td className="text-right py-3 px-4 text-white">
-                            {discipline.adhesions_payees}/{discipline.total_adhesions}
+                            {discipline.adhesions_payees}
                           </td>
                           <td className="text-right py-3 px-4 text-white font-semibold">
                             {formatCurrency(discipline.ca_total)}
@@ -425,10 +430,13 @@ export default function DashboardFinancier() {
                             {formatCurrency(discipline.ca_helloasso)}
                           </td>
                           <td className="text-right py-3 px-4 text-yellow-400">
-                            {formatCurrency(discipline.ca_especes_cheques)}
+                            {formatCurrency(discipline.ca_especes)}
+                          </td>
+                          <td className="text-right py-3 px-4 text-orange-400">
+                            {formatCurrency(discipline.ca_cheque)}
                           </td>
                           <td className="text-right py-3 px-4 text-red-400">
-                            {discipline.nb_impayes_helloasso + discipline.nb_impayes_especes_cheques}
+                            {discipline.nb_impayes_helloasso + discipline.nb_impayes_especes + discipline.nb_impayes_cheque}
                           </td>
                         </tr>
                       ))}
