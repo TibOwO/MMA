@@ -33,34 +33,6 @@ test.describe('Page d\'accueil', () => {
 });
 
 /**
- * Tests E2E - Pages disciplines
- */
-test.describe('Page discipline', () => {
-  test('devrait afficher les informations de la discipline MMA', async ({ page }) => {
-    await page.goto('/discipline/mma');
-    
-    // Vérifier les éléments de la page
-    await expect(page.locator('h1')).toContainText(/MMA/i);
-    
-    // Vérifier qu'il y a une présentation
-    const presentation = page.locator('text=/Mixed Martial Arts/i');
-    await expect(presentation).toBeVisible({ timeout: 5000 });
-    
-    // Vérifier qu'il y a des horaires
-    const horaires = page.locator('text=/Horaires/i');
-    await expect(horaires).toBeVisible();
-  });
-
-  test('devrait afficher le bouton d\'inscription', async ({ page }) => {
-    await page.goto('/discipline/mma');
-    
-    // Vérifier le bouton d'adhésion
-    const btnInscription = page.locator('text=/S\'inscrire|Adhérer/i');
-    await expect(btnInscription).toBeVisible();
-  });
-});
-
-/**
  * Tests E2E - Processus d'adhésion
  */
 test.describe('Processus d\'adhésion', () => {

@@ -116,6 +116,13 @@ function LoginContent() {
           >
             {loading ? "Connexion…" : "Se connecter"}
           </button>
+
+          <Link
+            href="/subscribe"
+            className="text-center border border-white/40 text-white font-semibold py-2 rounded-full hover:bg-white/10 transition"
+          >
+            Inscription
+          </Link>
         </form>
       </div>
     </main>

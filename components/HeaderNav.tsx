@@ -108,20 +108,7 @@ export default function HeaderNav() {
     );
   }
 
-  return (
-    <div className="flex items-center gap-2">
-      <Link
-        href="/subscribe"
-        className="text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/40 hover:bg-white/10 transition"
-      >
-        Inscription
-      </Link>
-      <Link
-        href="/login"
-        className="bg-white text-black text-sm font-semibold px-4 py-2 rounded-full hover:bg-gray-200 transition"
-      >
-        Connexion
-      </Link>
-    </div>
-  );
+  // Visiteur non connecté : rien à afficher. La connexion et l'inscription se
+  // font depuis la page de connexion, qui est l'écran d'accueil hors session.
+  return null;
 }
