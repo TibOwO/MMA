@@ -208,7 +208,7 @@ export default function AnnoncesPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-white">Mes annonces</h1>
+            <h1 className="text-3xl font-extrabold text-white">Gestion des annonces</h1>
             <p className="text-gray-400 text-sm mt-1">
               Créez des annonces pour informer vos adhérents
             </p>

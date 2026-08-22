@@ -166,14 +166,14 @@ export default function AdminSportsPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;administration</a>
-            <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des sports</h1>
+            <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des disciplines</h1>
             <p className="text-gray-400 mt-1 text-sm">Disciplines, tarifs et créneaux horaires.</p>
           </div>
           <button
             onClick={openCreate}
             className="shrink-0 mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl transition text-sm"
           >
-            + Nouveau sport
+            + Nouvelle discipline
           </button>
         </div>
 
@@ -181,7 +181,7 @@ export default function AdminSportsPage() {
         {mode !== "idle" && (
           <form onSubmit={handleSubmit} className="bg-gray-900 rounded-2xl p-6 shadow-lg space-y-4 border border-indigo-800">
             <h2 className="font-semibold text-white text-lg">
-              {mode === "create" ? "Nouveau sport" : `Modifier — ${editKey}`}
+              {mode === "create" ? "Nouvelle discipline" : `Modifier — ${editKey}`}
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -292,7 +292,7 @@ export default function AdminSportsPage() {
         <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
             <h2 className="font-semibold text-white">
-              Sports <span className="text-indigo-400 font-bold">{disciplines.length}</span>
+              Disciplines <span className="text-indigo-400 font-bold">{disciplines.length}</span>
             </h2>
             <button onClick={loadDisciplines} className="text-xs text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition">
               Actualiser
@@ -302,7 +302,7 @@ export default function AdminSportsPage() {
           {loading ? (
             <div className="py-16 text-center text-gray-500 text-sm">Chargement…</div>
           ) : disciplines.length === 0 ? (
-            <div className="py-16 text-center text-gray-500 text-sm">Aucun sport configuré.</div>
+            <div className="py-16 text-center text-gray-500 text-sm">Aucune discipline configurée.</div>
           ) : (
             <div className="divide-y divide-gray-800">
               {disciplines.map((d) => (

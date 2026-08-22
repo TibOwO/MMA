@@ -8,7 +8,7 @@ const PANELS = [
   {
     href: "/coach/dashboard",
     title: "Dashboard Financier",
-    description: "Suivi des revenus de vos disciplines (HelloAsso et espèces/chèques).",
+    description: "Suivi des revenus HelloAsso, espèces et chèques avec statistiques détaillées par discipline.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -18,7 +18,7 @@ const PANELS = [
   },
   {
     href: "/coach/disciplines",
-    title: "Mes disciplines",
+    title: "Gestion des disciplines",
     description: "Gérer les horaires, tarifs et description de vos disciplines.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -29,8 +29,8 @@ const PANELS = [
   },
   {
     href: "/coach/adherents",
-    title: "Mes adhérents",
-    description: "Consulter la liste des adhérents inscrits à vos disciplines.",
+    title: "Utilisateurs & Adhésions",
+    description: "Consulter les adhérents de vos disciplines, leurs adhésions et leurs échéances.",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5.916-3.519M9 20H4v-2a4 4 0 015.916-3.519M15 7a4 4 0 11-8 0 4 4 0 018 0zm6 3a3 3 0 11-6 0 3 3 0 016 0zM3 10a3 3 0 116 0 3 3 0 01-6 0z" />
@@ -41,7 +41,7 @@ const PANELS = [
   {
     href: "/coach/impayes",
     title: "Impayés",
-    description: "Voir les adhérents avec des paiements en attente ou refusés.",
+    description: "Consulter la liste des adhérents avec paiements en attente ou refusés (HelloAsso, espèces, chèques).",
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -112,29 +112,37 @@ export default function CoachPage() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-10">
-          <h1 className="text-4xl font-extrabold text-white mb-2">Espace coach</h1>
-          <p className="text-gray-400">
-            Bienvenue <span className="text-indigo-400 font-medium">{userName}</span>. Choisissez un panneau de gestion ci-dessous.
-          </p>
+      <div className="max-w-3xl mx-auto space-y-8">
+
+        {/* Header */}
+        <div>
+          <p className="text-sm text-gray-500 mb-1">Connecté en tant que coach — {userName}</p>
+          <h1 className="text-3xl font-extrabold text-white">Espace coach</h1>
+          <p className="text-gray-400 mt-1 text-sm">Sélectionnez une section à gérer.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {PANELS.map((panel) => (
             <Link
               key={panel.href}
               href={panel.href}
-              className="group bg-gray-900 hover:bg-gray-800 rounded-2xl p-6 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] border border-gray-800 hover:border-gray-700"
+              className="group bg-gray-900 hover:bg-gray-800 rounded-2xl p-6 flex flex-col gap-4 shadow-lg transition"
             >
-              <div className={`inline-flex p-3 rounded-xl mb-4 transition ${colorMap[panel.color]}`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition ${colorMap[panel.color]}`}>
                 {panel.icon}
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">{panel.title}</h2>
-              <p className="text-sm text-gray-400">{panel.description}</p>
+              <div>
+                <h2 className="font-semibold text-white text-base">{panel.title}</h2>
+                <p className="text-sm text-gray-400 mt-1">{panel.description}</p>
+              </div>
+              <span className="text-xs text-gray-600 group-hover:text-gray-400 transition mt-auto">
+                Accéder →
+              </span>
             </Link>
           ))}
         </div>
+
       </div>
     </main>
   );

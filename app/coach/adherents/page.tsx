@@ -437,7 +437,7 @@ function CoachAdherentsContent() {
         {/* Header */}
         <div>
           <a href="/coach" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;espace coach</a>
-          <h1 className="text-3xl font-extrabold text-white mt-2">Mes adhérents</h1>
+          <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des utilisateurs</h1>
           <p className="text-gray-400 mt-1 text-sm">Consultez vos adhérents et gérez leurs adhésions.</p>
         </div>
 

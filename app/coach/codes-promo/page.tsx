@@ -209,7 +209,7 @@ export default function CodesPromoPage() {
     <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-extrabold text-white">Mes codes promo</h1>
+          <h1 className="text-3xl font-extrabold text-white">Gestion des codes promo</h1>
           <button
             onClick={() => {
               resetForm();

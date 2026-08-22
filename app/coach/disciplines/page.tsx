@@ -128,18 +128,13 @@ export default function CoachDisciplinesPage() {
     <main className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4">
       <div className="max-w-3xl mx-auto space-y-8">
 
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-white">Mes disciplines</h1>
+            <a href="/coach" className="text-sm text-gray-500 hover:text-gray-300 transition">← Retour à l&apos;espace coach</a>
+            <h1 className="text-3xl font-extrabold text-white mt-2">Gestion des disciplines</h1>
             <p className="text-gray-400 mt-1 text-sm">Gérez les créneaux horaires et la description de vos disciplines.</p>
           </div>
-          
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-400 hover:text-gray-300 transition"
-          >
-            ← Retour
-          </button>
         </div>
 
         {loading ? (
