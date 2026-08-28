@@ -45,6 +45,9 @@ interface User {
   role: string;
   disciplines: string[];
   adhesions: Adhesion[];
+  /** false = membre hors des disciplines du coach : coordonnées et adhésions
+   *  masquées côté serveur, on ne peut que lui créer une adhésion. */
+  dans_mes_disciplines: boolean;
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -455,12 +458,19 @@ function CoachAdherentsContent() {
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-white text-lg">
                 {editUser.prenom} {editUser.nom}
-                <span className="ml-2 text-sm text-gray-400 font-normal">{editUser.email}</span>
+                {editUser.email && <span className="ml-2 text-sm text-gray-400 font-normal">{editUser.email}</span>}
               </h2>
               <button onClick={() => setEditId(null)} className="text-gray-500 hover:text-white text-xl leading-none transition">×</button>
             </div>
 
+            {!editUser.dans_mes_disciplines && (
+              <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 text-sm text-gray-400">
+                Ce membre n&apos;a aucune adhésion dans vos disciplines. 
+              </div>
+            )}
+
             {/* Contacts (lecture seule : la modification se fait côté admin) */}
+            {editUser.dans_mes_disciplines && (
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
               <span className="text-gray-400">
                 Téléphone :{" "}
@@ -475,6 +485,7 @@ function CoachAdherentsContent() {
                 </span>
               )}
             </div>
+            )}
 
             {/* Adhésions */}
             <div className="flex flex-col gap-1">
@@ -606,7 +617,9 @@ function CoachAdherentsContent() {
                 </div>
               ) : (
                 <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-500 text-center">
-                  Aucune adhésion enregistrée
+                  {editUser.dans_mes_disciplines
+                    ? "Aucune adhésion enregistrée"
+                    : "Aucune adhésion dans vos disciplines"}
                 </div>
               )}
             </div>
@@ -770,16 +783,32 @@ function CoachAdherentsContent() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-white">{u.prenom} {u.nom}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ROLE_COLOR[u.role]}`}>{ROLE_LABEL[u.role]}</span>
+                      <span className={`font-medium ${u.dans_mes_disciplines ? "text-white" : "text-gray-400"}`}>
+                        {u.prenom} {u.nom}
+                      </span>
+                      {u.dans_mes_disciplines ? (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${ROLE_COLOR[u.role]}`}>{ROLE_LABEL[u.role]}</span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-800 text-gray-500">
+                          Hors de vos disciplines
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate">
-                      {u.email}
-                      {u.telephone && <span className="ml-2">· {formaterTelephone(u.telephone)}</span>}
-                    </p>
-                    {u.adhesions.length > 0 && (
-                      <p className="text-xs text-indigo-400 mt-0.5">
-                        Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
+                    {u.dans_mes_disciplines ? (
+                      <>
+                        <p className="text-xs text-gray-500 truncate">
+                          {u.email}
+                          {u.telephone && <span className="ml-2">· {formaterTelephone(u.telephone)}</span>}
+                        </p>
+                        {u.adhesions.length > 0 && (
+                          <p className="text-xs text-indigo-400 mt-0.5">
+                            Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-600">
+                        Coordonnées masquées — créez une adhésion pour y accéder
                       </p>
                     )}
                   </div>

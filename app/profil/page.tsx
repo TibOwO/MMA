@@ -525,9 +525,8 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
           label="Statut"
           value={<span className={`font-semibold ${statutColor}`}>{statutLabel}</span>}
         />
-        {adhesion.code_zk !== null && adhesion.afficher_qr && (
-          <InfoRow label="Code ZK" value={String(adhesion.code_zk)} />
-        )}
+        {/* La valeur numérique du code ZK n'est pas affichée : l'adhérent
+            scanne le QR ci-dessous, il n'a pas besoin de lire les chiffres. */}
       </dl>
 
       {adhesion.code_zk !== null && adhesion.afficher_qr ? (
