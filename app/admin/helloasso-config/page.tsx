@@ -7,7 +7,8 @@ interface HelloAssoAssociation {
   id: number;
   nom: string;
   client_id: string;
-  client_secret: string;
+  /** Le secret n'est jamais renvoyé par l'API : on sait seulement s'il existe. */
+  client_secret_defini?: boolean;
   api_base: string;
   organisation_slug: string;
   active: boolean;
@@ -221,8 +222,10 @@ export default function HelloAssoConfigPage() {
     setSelectedAssoc(assoc);
     setFormData({
       nom: assoc.nom,
-      client_id: assoc.client_id,
-      client_secret: assoc.client_secret,
+      client_id: assoc.client_id ?? "",
+      // Le secret n'est pas renvoyé par l'API : champ laissé vide, ce qui
+      // signifie « conserver le secret actuel » côté serveur.
+      client_secret: "",
       api_base: assoc.api_base,
       organisation_slug: assoc.organisation_slug,
       active: assoc.active,
@@ -597,8 +600,13 @@ export default function HelloAssoConfigPage() {
                     value={formData.client_secret}
                     onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white font-mono text-sm"
-                    placeholder="••••••••"
+                    placeholder={selectedAssoc?.client_secret_defini ? "•••••••• (inchangé)" : "Aucun secret enregistré"}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {selectedAssoc?.client_secret_defini
+                      ? "Laissez vide pour conserver le secret actuel."
+                      : "Aucun secret enregistré : les paiements échoueront tant qu'il n'est pas renseigné."}
+                  </p>
                 </div>
                 
                 <div>
