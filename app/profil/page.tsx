@@ -25,6 +25,24 @@ interface Horaire {
   description: string;
 }
 
+interface EcheancePlan {
+  numero: number;
+  montant: number;
+  date_echeance: string;
+  date_paiement: string | null;
+  statut: string;
+}
+
+/** Renvoyé uniquement quand il reste des versements dus. */
+interface Echeancier {
+  nb_total: number;
+  nb_payees: number;
+  montant_total: number;
+  montant_paye: number;
+  montant_restant: number;
+  echeances: EcheancePlan[];
+}
+
 interface Adhesion {
   saison: string;
   statut: string;
@@ -32,6 +50,7 @@ interface Adhesion {
   discipline_key: string | null;
   code_zk: number | null;
   afficher_qr: boolean;
+  echeancier: Echeancier | null;
   horaires: Horaire[];
 }
 
@@ -529,6 +548,8 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
             scanne le QR ci-dessous, il n'a pas besoin de lire les chiffres. */}
       </dl>
 
+      {adhesion.echeancier && <EcheancierApercu echeancier={adhesion.echeancier} />}
+
       {adhesion.code_zk !== null && adhesion.afficher_qr ? (
         <div className="flex flex-col items-center gap-3 mt-5">
           <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
@@ -560,6 +581,62 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function EcheancierApercu({ echeancier }: { echeancier: Echeancier }) {
+  const euros = (montant: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(montant);
+  const jour = (iso: string) => new Date(iso).toLocaleDateString("fr-FR");
+
+  const progression = echeancier.montant_total
+    ? Math.round((echeancier.montant_paye / echeancier.montant_total) * 100)
+    : 0;
+
+  return (
+    <div className="mt-5 bg-gray-900/60 border border-gray-700/50 rounded-xl p-4">
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <h4 className="text-sm font-semibold text-indigo-200">Échéancier</h4>
+        <span className="text-xs text-gray-400">
+          {echeancier.nb_payees}/{echeancier.nb_total} versements réglés
+        </span>
+      </div>
+
+      {/* Barre de progression */}
+      <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden mb-2">
+        <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progression}%` }} />
+      </div>
+      <p className="text-xs text-gray-400 mb-3">
+        {euros(echeancier.montant_paye)} versés sur {euros(echeancier.montant_total)} —{" "}
+        <span className="text-gray-200 font-medium">{euros(echeancier.montant_restant)} restants</span>
+      </p>
+
+      <ul className="divide-y divide-gray-800">
+        {echeancier.echeances.map((e) => {
+          const enRetard = e.statut === "retard";
+          const payee = e.statut === "payee";
+          return (
+            <li key={e.numero} className="flex items-center justify-between gap-3 py-2 text-xs">
+              <span className={payee ? "text-gray-500" : "text-gray-300"}>
+                <span className="font-medium">Versement {e.numero}</span>
+                <span className="ml-2">{euros(e.montant)}</span>
+              </span>
+              <span className="text-right">
+                {payee ? (
+                  <span className="text-green-400">
+                    ✓ payé{e.date_paiement ? ` le ${jour(e.date_paiement)}` : ""}
+                  </span>
+                ) : enRetard ? (
+                  <span className="text-red-400">En retard depuis le {jour(e.date_echeance)}</span>
+                ) : (
+                  <span className="text-gray-400">À régler avant le {jour(e.date_echeance)}</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
