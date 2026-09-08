@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { formaterTelephone, normaliserTelephone } from "../../../lib/telephone";
+import { saisonCourante } from "../../../lib/saison";
 
 interface Discipline {
   key: string;
@@ -92,6 +93,9 @@ function AdminUsersContent() {
   const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
   const [filterPayment, setFilterPayment] = useState<string>("all"); // all, paid, unpaid
   const [filterQRStatus, setFilterQRStatus] = useState<string>("all"); // all, active, inactive
+  const [filterStatut, setFilterStatut] = useState<string>("all"); // all, payee, en_attente, expiree
+  const [filterMode, setFilterMode] = useState<string>("all"); // all + valeurs de MODE_PAIEMENT_CHOICES
+  const [saisonAffichee, setSaisonAffichee] = useState<string>(saisonCourante()); // "all" ou une saison précise
 
   // Edit panel
   const [editId, setEditId] = useState<number | null>(null);
@@ -531,7 +535,20 @@ function AdminUsersContent() {
     }
   }
 
+  // Saisons proposées : celles réellement présentes en base, plus la saison
+  // en cours même si aucune adhésion n'y est encore rattachée — c'est la
+  // valeur par défaut, elle doit exister dans la liste.
+  const saison = saisonCourante();
+  const saisonsDisponibles = Array.from(
+    new Set([saison, ...users.flatMap((u) => u.adhesions.map((a) => a.saison))])
+  ).sort().reverse();
+
+  // Adhésions prises en compte par les filtres et le résumé de ligne.
+  const adhesionsVisibles = (u: User) =>
+    saisonAffichee === "all" ? u.adhesions : u.adhesions.filter((a) => a.saison === saisonAffichee);
+
   const filtered = users.filter((u) => {
+    const adhesions = adhesionsVisibles(u);
     const q = search.toLowerCase();
     // Recherche par numéro : on compare les chiffres seuls, pour retrouver
     // "0612345678" aussi bien en tapant "06 12" qu'en tapant "0612".
@@ -543,36 +560,52 @@ function AdminUsersContent() {
       (chiffresRecherches !== "" && (u.telephone || "").includes(chiffresRecherches))
     );
     
+    // Un membre dont toutes les adhésions sont hors périmètre disparaît de la
+    // liste. Celui qui n'en a aucune reste visible : il peut s'en voir créer une.
+    if (u.adhesions.length > 0 && adhesions.length === 0) return false;
+
     // Filtre par discipline
     let matchesDiscipline = true;
     if (filterDiscipline !== "all") {
       // Vérifier si l'utilisateur a au moins une adhésion dans cette discipline
-      matchesDiscipline = u.adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
+      matchesDiscipline = adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
     }
-    
-    // Filtre par paiement
+
+    // Filtre par état de paiement (à jour / en retard)
     let matchesPayment = true;
     if (filterPayment === "unpaid") {
-      matchesPayment = u.adhesions.some((adhesion) => adhesion.has_payment_issues);
+      matchesPayment = adhesions.some((adhesion) => adhesion.has_payment_issues);
     } else if (filterPayment === "paid") {
-      matchesPayment = u.adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
+      matchesPayment = adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
     }
-    
+
     // Filtre par statut QR
     let matchesQRStatus = true;
     if (filterQRStatus === "active") {
       // Au moins une adhésion avec QR activé
-      matchesQRStatus = u.adhesions.some((adhesion) => adhesion.afficher_qr && adhesion.statut === 'payee');
+      matchesQRStatus = adhesions.some((adhesion) => adhesion.afficher_qr && adhesion.statut === 'payee');
     } else if (filterQRStatus === "inactive") {
       // Au moins une adhésion avec QR désactivé (manuellement, impayé, ou expirée)
-      matchesQRStatus = u.adhesions.some((adhesion) => 
-        !adhesion.afficher_qr || 
-        adhesion.has_payment_issues || 
+      matchesQRStatus = adhesions.some((adhesion) =>
+        !adhesion.afficher_qr ||
+        adhesion.has_payment_issues ||
         adhesion.statut === 'expiree'
       );
     }
-    
-    return matchesSearch && matchesDiscipline && matchesPayment && matchesQRStatus;
+
+    // Filtre par statut d'adhésion
+    let matchesStatut = true;
+    if (filterStatut !== "all") {
+      matchesStatut = adhesions.some((adhesion) => adhesion.statut === filterStatut);
+    }
+
+    // Filtre par mode de paiement
+    let matchesMode = true;
+    if (filterMode !== "all") {
+      matchesMode = adhesions.some((adhesion) => adhesion.mode_paiement === filterMode);
+    }
+
+    return matchesSearch && matchesDiscipline && matchesPayment && matchesQRStatus && matchesStatut && matchesMode;
   });
 
   if (!ready) return null;
@@ -974,7 +1007,7 @@ function AdminUsersContent() {
             <div className="flex items-center gap-4">
               <h2 className="font-semibold text-white shrink-0">
                 Membres <span className="text-indigo-400 font-bold">{filtered.length}</span>
-                {(filterDiscipline !== "all" || filterPayment !== "all" || filterQRStatus !== "all") && <span className="text-gray-500">/{users.length}</span>}
+                {(filterDiscipline !== "all" || filterPayment !== "all" || filterQRStatus !== "all" || filterStatut !== "all" || filterMode !== "all" || saisonAffichee !== "all") && <span className="text-gray-500">/{users.length}</span>}
               </h2>
               <input
                 value={search}
@@ -989,6 +1022,23 @@ function AdminUsersContent() {
 
             {/* Filtres en grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Filtre saison */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Saison</label>
+                <select
+                  value={saisonAffichee}
+                  onChange={(e) => setSaisonAffichee(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                >
+                  <option value="all">Toutes les saisons</option>
+                  {saisonsDisponibles.map((s) => (
+                    <option key={s} value={s}>
+                      {s}{s === saison ? " (en cours)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Filtre discipline */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-gray-400">Discipline</label>
@@ -1029,8 +1079,8 @@ function AdminUsersContent() {
                     className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
                   >
                     <option value="all">Tous</option>
-                    <option value="paid">Paiement OK</option>
-                    <option value="unpaid">Impayés</option>
+                    <option value="paid">OK</option>
+                    <option value="unpaid">Impayé</option>
                   </select>
                   {filterPayment !== "all" && (
                     <button
@@ -1068,7 +1118,62 @@ function AdminUsersContent() {
                   )}
                 </div>
               </div>
+
+              {/* Filtre statut d'adhésion */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Statut de l&apos;adhésion</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterStatut}
+                    onChange={(e) => setFilterStatut(e.target.value)}
+                    className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="payee">Payée</option>
+                    <option value="en_attente">En attente</option>
+                    <option value="expiree">Expirée</option>
+                  </select>
+                  {filterStatut !== "all" && (
+                    <button
+                      onClick={() => setFilterStatut("all")}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition shrink-0"
+                      title="Réinitialiser"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filtre mode de paiement */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-gray-400">Mode de paiement</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterMode}
+                    onChange={(e) => setFilterMode(e.target.value)}
+                    className="flex-1 bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="helloasso">HelloAsso</option>
+                    <option value="especes">Espèces</option>
+                    <option value="cheque">Chèque</option>
+                    <option value="transfert">Transfert de discipline</option>
+                    <option value="gratuite">Gratuite</option>
+                  </select>
+                  {filterMode !== "all" && (
+                    <button
+                      onClick={() => setFilterMode("all")}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition shrink-0"
+                      title="Réinitialiser"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
+
           </div>
 
           {loading ? (
@@ -1095,9 +1200,9 @@ function AdminUsersContent() {
                     {u.role === "coach" && u.disciplines.length > 0 && (
                       <p className="text-xs text-teal-400 mt-0.5">Enseigne : {u.disciplines.join(", ")}</p>
                     )}
-                    {u.adhesions.length > 0 && (
+                    {adhesionsVisibles(u).length > 0 && (
                       <p className="text-xs text-indigo-400 mt-0.5">
-                        Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
+                        Adhésions : {adhesionsVisibles(u).map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
                       </p>
                     )}
                   </div>

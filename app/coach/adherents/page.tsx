@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { formaterTelephone } from "../../../lib/telephone";
+import { saisonCourante } from "../../../lib/saison";
 
 interface Discipline {
   key: string;
@@ -72,6 +73,9 @@ function CoachAdherentsContent() {
   const [search, setSearch] = useState("");
   const [filterDiscipline, setFilterDiscipline] = useState<string>("all");
   const [filterPayment, setFilterPayment] = useState<string>("all"); // all, paid, unpaid
+  const [filterStatut, setFilterStatut] = useState<string>("all"); // all, payee, en_attente, expiree
+  const [filterMode, setFilterMode] = useState<string>("all"); // all + valeurs de MODE_PAIEMENT_CHOICES
+  const [saisonAffichee, setSaisonAffichee] = useState<string>(saisonCourante()); // "all" ou une saison précise
 
   // Edit panel
   const [editId, setEditId] = useState<number | null>(null);
@@ -408,7 +412,20 @@ function CoachAdherentsContent() {
     }
   }
 
+  // Saisons proposées : celles réellement présentes dans les adhésions de ses
+  // disciplines, plus la saison en cours même si aucune adhésion ne s'y
+  // rattache encore — c'est la valeur par défaut, elle doit exister dans la liste.
+  const saison = saisonCourante();
+  const saisonsDisponibles = Array.from(
+    new Set([saison, ...users.flatMap((u) => u.adhesions.map((a) => a.saison))])
+  ).sort().reverse();
+
+  // Adhésions prises en compte par les filtres et le résumé de ligne.
+  const adhesionsVisibles = (u: User) =>
+    saisonAffichee === "all" ? u.adhesions : u.adhesions.filter((a) => a.saison === saisonAffichee);
+
   const filtered = users.filter((u) => {
+    const adhesions = adhesionsVisibles(u);
     const q = search.toLowerCase();
     // Recherche par numéro : on compare les chiffres seuls, pour retrouver
     // "0612345678" aussi bien en tapant "06 12" qu'en tapant "0612".
@@ -420,21 +437,37 @@ function CoachAdherentsContent() {
       (chiffresRecherches !== "" && (u.telephone || "").includes(chiffresRecherches))
     );
     
+    // Un membre dont toutes les adhésions sont hors périmètre disparaît de la
+    // liste — sauf s'il n'en a aucune, cas déjà géré par le serveur.
+    if (u.adhesions.length > 0 && adhesions.length === 0) return false;
+
     // Filtre par discipline
     let matchesDiscipline = true;
     if (filterDiscipline !== "all") {
-      matchesDiscipline = u.adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
+      matchesDiscipline = adhesions.some((adhesion) => adhesion.discipline === filterDiscipline);
     }
-    
-    // Filtre par paiement
+
+    // Filtre par état de paiement (à jour / en retard)
     let matchesPayment = true;
     if (filterPayment === "unpaid") {
-      matchesPayment = u.adhesions.some((adhesion) => adhesion.has_payment_issues);
+      matchesPayment = adhesions.some((adhesion) => adhesion.has_payment_issues);
     } else if (filterPayment === "paid") {
-      matchesPayment = u.adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
+      matchesPayment = adhesions.some((adhesion) => !adhesion.has_payment_issues && adhesion.statut === 'payee');
     }
-    
-    return matchesSearch && matchesDiscipline && matchesPayment;
+
+    // Filtre par statut d'adhésion
+    let matchesStatut = true;
+    if (filterStatut !== "all") {
+      matchesStatut = adhesions.some((adhesion) => adhesion.statut === filterStatut);
+    }
+
+    // Filtre par mode de paiement
+    let matchesMode = true;
+    if (filterMode !== "all") {
+      matchesMode = adhesions.some((adhesion) => adhesion.mode_paiement === filterMode);
+    }
+
+    return matchesSearch && matchesDiscipline && matchesPayment && matchesStatut && matchesMode;
   });
 
   if (!ready) return null;
@@ -710,7 +743,7 @@ function CoachAdherentsContent() {
             <div className="flex items-center gap-4">
               <h2 className="font-semibold text-white shrink-0">
                 Adhérents <span className="text-indigo-400 font-bold">{filtered.length}</span>
-                {(filterDiscipline !== "all" || filterPayment !== "all") && <span className="text-gray-500">/{users.length}</span>}
+                {(filterDiscipline !== "all" || filterPayment !== "all" || filterStatut !== "all" || filterMode !== "all" || saisonAffichee !== "all") && <span className="text-gray-500">/{users.length}</span>}
               </h2>
               <input
                 value={search}
@@ -754,8 +787,8 @@ function CoachAdherentsContent() {
                 className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
               >
                 <option value="all">Tous</option>
-                <option value="paid">Paiement OK</option>
-                <option value="unpaid">Impayés</option>
+                <option value="paid">OK</option>
+                <option value="unpaid">Impayé</option>
               </select>
               {filterPayment !== "all" && (
                 <button
@@ -766,6 +799,67 @@ function CoachAdherentsContent() {
                   ✕
                 </button>
               )}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 shrink-0">Filtrer par statut :</label>
+              <select
+                value={filterStatut}
+                onChange={(e) => setFilterStatut(e.target.value)}
+                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <option value="all">Tous</option>
+                <option value="payee">Payée</option>
+                <option value="en_attente">En attente</option>
+                <option value="expiree">Expirée</option>
+              </select>
+              {filterStatut !== "all" && (
+                <button
+                  onClick={() => setFilterStatut("all")}
+                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
+                  title="Réinitialiser le filtre"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 shrink-0">Filtrer par mode de paiement :</label>
+              <select
+                value={filterMode}
+                onChange={(e) => setFilterMode(e.target.value)}
+                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <option value="all">Tous</option>
+                <option value="helloasso">HelloAsso</option>
+                <option value="especes">Espèces</option>
+                <option value="cheque">Chèque</option>
+                <option value="transfert">Transfert de discipline</option>
+                <option value="gratuite">Gratuite</option>
+              </select>
+              {filterMode !== "all" && (
+                <button
+                  onClick={() => setFilterMode("all")}
+                  className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded transition"
+                  title="Réinitialiser le filtre"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-400 shrink-0">Saison :</label>
+              <select
+                value={saisonAffichee}
+                onChange={(e) => setSaisonAffichee(e.target.value)}
+                className="bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-sm text-gray-100 rounded-lg px-3 py-1.5 transition"
+              >
+                <option value="all">Toutes les saisons</option>
+                {saisonsDisponibles.map((s) => (
+                  <option key={s} value={s}>
+                    {s}{s === saison ? " (en cours)" : ""}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -800,9 +894,9 @@ function CoachAdherentsContent() {
                           {u.email}
                           {u.telephone && <span className="ml-2">· {formaterTelephone(u.telephone)}</span>}
                         </p>
-                        {u.adhesions.length > 0 && (
+                        {adhesionsVisibles(u).length > 0 && (
                           <p className="text-xs text-indigo-400 mt-0.5">
-                            Adhésions : {u.adhesions.map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
+                            Adhésions : {adhesionsVisibles(u).map(a => a.discipline || 'Sans discipline').filter((v, i, arr) => arr.indexOf(v) === i).join(", ")}
                           </p>
                         )}
                       </>

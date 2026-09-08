@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { saisonCourante } from "../lib/saison";
+
 interface StatsGlobales {
   total_adhesions: number;
   adhesions_payees: number;
@@ -92,6 +94,8 @@ interface DashboardData {
   stats_modes_paiement: StatsModePaiement[];
   utilisateurs_echeances_en_attente: UtilisateurEcheance[];
   disciplines_disponibles: DisciplineDisponible[];
+  /** Saisons réellement présentes en base, dans le périmètre du rôle. */
+  saisons_disponibles: string[];
 }
 
 export default function DashboardFinancier() {
@@ -187,21 +191,6 @@ export default function DashboardFinancier() {
       ? `/admin/users?userId=${userId}`
       : `/coach/adherents?userId=${userId}`;
 
-  const generateSaisonOptions = (): string[] => {
-    const options: string[] = [];
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    
-    // Générer les 5 dernières saisons + la saison actuelle
-    for (let i = 0; i < 6; i++) {
-      const year = currentYear - i;
-      const saisonLabel = `${year}-${year + 1}`;
-      options.push(saisonLabel);
-    }
-    
-    return options;
-  };
-
   if (!ready) return null;
 
   return (
@@ -243,12 +232,17 @@ export default function DashboardFinancier() {
                 onChange={(e) => setSaisonFilter(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Saison actuelle</option>
-                {generateSaisonOptions().map((saison) => (
-                  <option key={saison} value={saison}>
-                    {saison}
-                  </option>
-                ))}
+                {/* La saison en cours garde la valeur vide : c'est le défaut
+                    côté serveur. Les autres saisons sont celles qui existent
+                    réellement en base pour le périmètre de l'utilisateur. */}
+                <option value="">Saison en cours ({saisonCourante()})</option>
+                {(data?.saisons_disponibles ?? [])
+                  .filter((s) => s !== saisonCourante())
+                  .map((saison) => (
+                    <option key={saison} value={saison}>
+                      {saison}
+                    </option>
+                  ))}
               </select>
             </div>
 
