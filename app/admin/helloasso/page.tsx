@@ -126,12 +126,18 @@ export default function HelloAssoAdminPage() {
                           className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                             a.statut === "payee"
                               ? "bg-green-900 text-green-300"
-                              : a.statut === "expiree"
-                              ? "bg-amber-900 text-amber-300"
-                              : "bg-red-900 text-red-300"
+                              : a.statut === "en_attente"
+                              ? "bg-blue-900 text-blue-300"
+                              : "bg-amber-900 text-amber-300"
                           }`}
                         >
-                          {a.statut === "payee" ? "Payée" : a.statut === "expiree" ? "Expirée" : "Remboursée"}
+                          {a.statut === "payee"
+                            ? "Payée"
+                            : a.statut === "en_attente"
+                            ? "En attente"
+                            : a.statut === "expiree"
+                            ? "Expirée"
+                            : a.statut}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600 font-mono text-xs">{a.ha_order_id}</td>

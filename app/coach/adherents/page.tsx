@@ -28,7 +28,8 @@ interface Adhesion {
 interface Echeance {
   id?: number;
   numero: number;
-  montant: number;
+  /** Chaîne pendant la saisie du formulaire, nombre pour les échéances chargées depuis l'API. */
+  montant: number | string;
   date_echeance: string;
   date_paiement?: string | null;
   statut?: string;
@@ -252,6 +253,8 @@ function CoachAdherentsContent() {
   }
 
   function updateEcheance(index: number, field: keyof Echeance, value: any) {
+    // La saisie est conservée telle quelle, y compris un 0 délibéré et les
+    // états intermédiaires comme "12.". La conversion a lieu à la soumission.
     setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
   }
 
@@ -563,9 +566,9 @@ function CoachAdherentsContent() {
                                 ? 'bg-red-900 text-red-300'
                                 : a.statut === 'payee'
                                 ? 'bg-green-900 text-green-300'
-                                : a.statut === 'expiree'
-                                ? 'bg-amber-900 text-amber-300'
-                                : 'bg-red-900 text-red-300'
+                                : a.statut === 'en_attente'
+                                ? 'bg-blue-900 text-blue-300'
+                                : 'bg-amber-900 text-amber-300'
                             }`}
                             title={a.statut === 'payee' && a.has_payment_issues ? "Échéance(s) en retard ou paiement HelloAsso refusé" : undefined}
                           >
@@ -573,9 +576,11 @@ function CoachAdherentsContent() {
                               ? 'Impayé'
                               : a.statut === 'payee'
                               ? 'Payée'
+                              : a.statut === 'en_attente'
+                              ? 'En attente'
                               : a.statut === 'expiree'
                               ? 'Expirée'
-                              : 'Remboursée'}
+                              : a.statut}
                           </span>
                           <button
                             onClick={() => toggleAfficherQR(a.id)}
@@ -1053,11 +1058,12 @@ function CoachAdherentsContent() {
                           <div>
                             <label className="text-[10px] text-gray-500">Montant (€)</label>
                             <input
-/*                              type="number"
+                              type="number"
                               step="0.01"
-                              value={ech.montant} */
-                              onChange={(e) => updateEcheance(idx, 'montant', parseFloat(e.target.value) || 0)}
+                              value={ech.montant}
+                              onChange={(e) => updateEcheance(idx, 'montant', e.target.value)}
                               className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded px-2 py-1.5"
+                              min="0"
                             />
                           </div>
                           <div>

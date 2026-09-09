@@ -30,7 +30,8 @@ interface Echeance {
   id?: number;
   adhesion_id?: number;
   numero: number;
-  montant: number;
+  /** Chaîne pendant la saisie du formulaire, nombre pour les échéances chargées depuis l'API. */
+  montant: number | string;
   date_echeance: string;
   date_paiement?: string | null;
   statut?: string;
@@ -257,8 +258,11 @@ function AdminUsersContent() {
 
   function updateEcheance(index: number, field: keyof Echeance, value: any) {
     if (field === 'montant') {
-      // Pour le montant, on parse le string pour stocker un nombre
-      setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, montant: value === "" ? 0 : parseFloat(value) || 0 } : e));
+      // On conserve la saisie brute : convertir ici en nombre effacerait un 0
+      // délibéré (0 réaffiché en champ vide) et écraserait les états
+      // intermédiaires comme "12." pendant la frappe. La conversion a lieu
+      // à la soumission, qui fait déjà parseFloat(String(...)).
+      setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, montant: value } : e));
     } else {
       setCreateEcheances(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
     }
@@ -755,7 +759,9 @@ function AdminUsersContent() {
                               ? 'Payée'
                               : a.statut === 'en_attente'
                               ? 'En attente'
-                              : 'Expirée'}
+                              : a.statut === 'expiree'
+                              ? 'Expirée'
+                              : a.statut}
                           </span>
                           <button
                             onClick={() => toggleAfficherQR(a.id)}
@@ -1356,7 +1362,7 @@ function AdminUsersContent() {
                              <input
                                type="number"
                                step="0.01"
-                               value={ech.montant === 0 ? "" : ech.montant}
+                               value={ech.montant}
                                onChange={(e) => updateEcheance(idx, 'montant', e.target.value)}
                                className="w-full bg-gray-800 border border-gray-700 focus:border-indigo-500 focus:outline-none text-xs text-gray-100 rounded px-2 py-1.5"
                                min="0"

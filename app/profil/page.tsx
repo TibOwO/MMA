@@ -520,9 +520,11 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
     ? 'Payée' 
     : adhesion.statut === 'en_attente' 
     ? 'En attente' 
-    : adhesion.statut === 'expiree' 
-    ? 'Expirée' 
-    : 'Remboursée';
+    : adhesion.statut === 'expiree'
+    ? 'Expirée'
+    // Les trois statuts du modèle sont couverts : ce repli ne sert qu'à rendre
+    // visible une valeur inconnue plutôt que de la maquiller en libellé plausible.
+    : adhesion.statut;
 
   const statutColor = adhesion.statut === 'payee'
     ? 'text-green-400'
