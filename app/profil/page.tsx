@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 
 import { formaterTelephone, normaliserTelephone } from "../../lib/telephone";
 
@@ -555,8 +555,18 @@ function AdhesionCard({ adhesion }: { adhesion: Adhesion }) {
       {adhesion.code_zk !== null && adhesion.afficher_qr ? (
         <div className="flex flex-col items-center gap-3 mt-5">
           <p className="text-sm text-gray-400">QR Code d&apos;accès au portique</p>
-          <div className="bg-white p-3 rounded-xl" data-testid="qr-code">
-            <QRCodeSVG value={String(adhesion.code_zk)} size={160} />
+          {/* Canvas plutôt que SVG : le mode sombre automatique de certains
+              navigateurs Android (Samsung Internet, Chrome) éclaircit les fill
+              noirs d'un SVG, ce qui donnait un QR blanc sur blanc. Les pixels
+              d'un canvas ne sont pas recolorés. */}
+          <div className="qr-protege bg-white p-3 rounded-xl" data-testid="qr-code">
+            <QRCodeCanvas
+              value={String(adhesion.code_zk)}
+              size={200}
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+              level="M"
+            />
           </div>
           <p className="text-xs text-gray-500 text-center max-w-xs">
             Scannez ce QR code au portique pour accéder au club

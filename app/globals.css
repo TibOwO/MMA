@@ -3,6 +3,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Le site gère son propre thème : indique aux navigateurs (Samsung Internet,
+     Chrome Android) de ne pas appliquer leur mode sombre automatique. */
+  color-scheme: light dark;
+}
+
+/* Le QR doit toujours rester noir sur blanc pour être lu par le portique. */
+.qr-protege {
+  color-scheme: only light;
+  forced-color-adjust: none;
 }
 
 @theme inline {

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MMA Club",
   description: "Club de MMA et sports de combat",
+};
+
+// Génère <meta name="color-scheme">, lu avant le CSS par les navigateurs
+// Android pour décider d'appliquer ou non leur mode sombre automatique.
+export const viewport: Viewport = {
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
