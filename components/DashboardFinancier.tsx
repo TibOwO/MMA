@@ -44,14 +44,6 @@ interface EvolutionMois {
   ca_estime: number;
 }
 
-interface StatsModePaiement {
-  mode_paiement: string;
-  mode_paiement_label: string;
-  nb_adhesions: number;
-  ca_estime: number;
-  pourcentage: number;
-}
-
 interface DisciplineDisponible {
   key: string;
   name: string;
@@ -91,7 +83,6 @@ interface DashboardData {
   stats_globales: StatsGlobales;
   stats_par_discipline: StatsDiscipline[];
   evolution_temporelle: EvolutionMois[];
-  stats_modes_paiement: StatsModePaiement[];
   utilisateurs_echeances_en_attente: UtilisateurEcheance[];
   disciplines_disponibles: DisciplineDisponible[];
   /** Saisons réellement présentes en base, dans le périmètre du rôle. */
